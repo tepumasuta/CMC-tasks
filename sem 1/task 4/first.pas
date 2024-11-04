@@ -1,0 +1,70 @@
+program FUPASCALFirst;
+
+type
+  Node = record val: Integer; next: ^Node end;
+  List = ^Node;
+
+var
+  count: Integer;
+  l: List;
+
+procedure PrintList(l: list);
+begin
+  while l <> nil do begin
+    Write(l^.val, ' ');
+    l := l^.next;
+  end
+end;
+
+procedure ReadList(var l: List; count: Integer);
+var tail: List; i: Integer;
+begin
+  if count > 0 then begin
+    new(l);
+    read(l^.val);
+    l^.next := nil;
+    tail := l;
+    for i := 2 to count do begin
+      new(tail^.next);
+      read(tail^.next^.val);
+      tail^.next^.next := nil;
+      tail := tail^.next;
+    end
+  end;
+end;
+
+procedure DisposeList(l: list);
+var tail: List;
+begin
+  while l <> nil do begin
+    tail := l^.next;
+    dispose(l);
+    l := tail;
+  end
+end;
+
+procedure First(l: list);
+var p, tmp: List;
+begin
+  while l <> nil do begin
+    p := l;
+    while (p <> nil) and (p^.next <> nil) do begin
+      while (p^.next <> nil) and (p^.next^.val = l^.val) do begin
+        tmp := p^.next^.next;
+        dispose(p^.next);
+        p^.next := tmp;
+      end;
+      p := p^.next;
+    end;
+    l := l^.next;
+  end;
+end;
+
+begin
+  Read(count);
+  ReadList(l, count);
+  First(l);
+  PrintList(l);
+  WriteLn;
+  DisposeList(l);
+end.
