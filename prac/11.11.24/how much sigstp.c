@@ -15,8 +15,8 @@ void sigtstp_handler(int) {
     sigtstps++;
 }
 
-void sigint_handler(int) {
-    signal(SIGINT, sigint_handler);
+void sigtstp_handler(int) {
+    signal(SIGINT, sigtstp_handler);
     sigints++;
     if (sigints == 2) signal(SIGTSTP, sigtstp_handler);
     if (sigints == 4) signal(SIGTSTP, SIG_IGN);
@@ -27,7 +27,7 @@ void sigint_handler(int) {
 }
 
 int main(void) {
-    signal(SIGINT, sigint_handler);
+    signal(SIGINT, sigtstp_handler);
     signal(SIGTSTP, SIG_IGN);
     while (1) pause();
     return 0;
