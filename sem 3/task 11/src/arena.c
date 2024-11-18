@@ -5,7 +5,6 @@
 
 struct Arena *arena_create(size_t initial_capacity) {
     struct Arena *arena = malloc(sizeof(*arena) + sizeof(char) * initial_capacity);
-    if (!arena) return arena;
     *arena = (struct Arena){
         .memory = arena + 1,
         .alloced = true,
@@ -17,7 +16,6 @@ struct Arena *arena_create(size_t initial_capacity) {
 
 struct Arena *arena_create_static_from_buffer(void *buffer, size_t buffer_capacity) {
     struct Arena *arena = malloc(sizeof(*arena));
-    if (!arena) return arena;
     *arena = (struct Arena){
         .memory = buffer,
         .alloced = false,
