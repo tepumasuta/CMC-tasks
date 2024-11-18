@@ -64,3 +64,30 @@ void arena_init_static_from_buffer(struct Arena *arena, void *buffer, size_t buf
         .cap = buffer_capacity,
     };
 }
+
+void *arena_alloc(struct Arena *arena, size_t size) {
+    assert(arena);
+    if (arena->alloced && arena->cap < arena->at + size) {
+        size_t new_cap = arena->cap;
+        if (!new_cap) new_cap = 1;
+        while (new_cap < arena->at + size) new_cap *= 2;
+        void *new = realloc(arena->memory, new_cap);
+        arena->cap = new_cap;
+        arena->memory = new;
+    }
+    void *mem = (char *)arena->memory + arena->at;
+    arena->at += size;
+    return mem;
+}
+
+void arena_reserve(struct Arena *arena, size_t capacity) {
+    assert(arena);
+    void *new = realloc(arena->memory, capacity);
+    arena->cap = capacity;
+    arena->memory = new;
+}
+
+void arena_reset(struct Arena *arena) {
+    assert(arena);
+    arena->at = 0;
+}
