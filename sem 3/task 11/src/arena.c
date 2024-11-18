@@ -91,3 +91,15 @@ void arena_reset(struct Arena *arena) {
     assert(arena);
     arena->at = 0;
 }
+
+size_t arena_capacity(struct Arena *arena) {
+    return arena->cap;
+}
+
+size_t arena_allocated(struct Arena *arena) {
+    return arena->at;
+}
+
+bool arena_is_static(struct Arena *arena) {
+    return !arena->alloced;
+}
