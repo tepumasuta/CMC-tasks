@@ -4,9 +4,9 @@
 #include <assert.h>
 
 struct Arena *arena_create(size_t initial_capacity) {
-    struct Arena *arena = malloc(sizeof(*arena) + sizeof(char) * initial_capacity);
+    struct Arena *arena = malloc(sizeof(*arena));
     *arena = (struct Arena){
-        .memory = arena + 1,
+        .memory = malloc(sizeof(char) * initial_capacity),
         .alloced = true,
         .at = 0,
         .cap = initial_capacity,
