@@ -16,7 +16,7 @@ struct Arena *arena_create_static_from_buffer(void *buffer, size_t buffer_capaci
 void arena_destroy(struct Arena **arena);
 
 /* In-place memory allocation */
-void arena_init(struct Arena *arena);
+void arena_init(struct Arena *arena, size_t initial_capacity);
 void arena_deinit(struct Arena *arena);
 // Doesn't have to be deallocated
 void arena_init_static_from_buffer(struct Arena *arena, void *buffer, size_t buffer_capacity);
