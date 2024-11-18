@@ -9,4 +9,4 @@ add_library(radshlib STATIC ${SRCS})
 target_include_directories(radshlib PUBLIC "include")
 
 add_executable(radsh src/radsh.c)
-target_link_libraries(radsh)
+target_link_libraries(radsh radshlib)
