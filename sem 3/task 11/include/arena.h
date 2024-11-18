@@ -5,6 +5,9 @@
 #include <stdbool.h>
 
 struct Arena {
+    bool alloced;
+    void *memory;
+    size_t cap, at;
 };
 
 /* Heap memory allocation */
