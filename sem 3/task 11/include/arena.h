@@ -44,10 +44,6 @@ bool arena_try_deinit(struct Arena *arena);
 
 void *arena_try_alloc(struct Arena *arena, size_t size);
 bool arena_try_reserve(struct Arena *arena, size_t capacity);
-bool arena_try_reset(struct Arena *arena);
-bool arena_try_capacity(struct Arena *arena, size_t *capacity);
-bool arena_try_allocated(struct Arena *arena, size_t *allocated);
-bool arena_try_is_static(struct Arena *arena, bool is_static);
 
 
 #endif
