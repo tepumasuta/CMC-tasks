@@ -38,7 +38,7 @@ bool arena_is_static(struct Arena *arena);
 struct Arena *arena_try_create(size_t initial_capacity);
 struct Arena *arena_try_create_static_from_buffer(void *buffer, size_t buffer_capacity);
 bool arena_try_destroy(struct Arena **arena);
-bool arena_try_init(struct Arena *arena);
+bool arena_try_init(struct Arena *arena, size_t initial_capacity);
 bool arena_try_init_static_from_buffer(struct Arena *arena, void *buffer, size_t buffer_capacity);
 bool arena_try_deinit(struct Arena *arena);
 
