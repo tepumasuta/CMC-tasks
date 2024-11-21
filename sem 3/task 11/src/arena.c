@@ -4,9 +4,9 @@
 #include <assert.h>
 
 struct Arena *arena_create(size_t initial_capacity) {
-    struct Arena *arena = malloc(sizeof(*arena));
+    struct Arena *arena = malloc(sizeof(*arena) + sizeof(char) * initial_capacity);
     *arena = (struct Arena){
-        .memory = malloc(sizeof(char) * initial_capacity),
+        .memory = arena + 1,
         .alloced = true,
         .at = 0,
         .cap = initial_capacity,
@@ -28,8 +28,7 @@ struct Arena *arena_create_static_from_buffer(void *buffer, size_t buffer_capaci
 void arena_destroy(struct Arena **arena) {
     assert(arena);
     assert(*arena);
-    if ((*arena)->alloced)
-        free(*arena);
+    free(*arena);
     *arena = NULL;
 }
 
@@ -38,9 +37,9 @@ void arena_init(struct Arena *arena, size_t initial_capacity) {
     void *mem = malloc(sizeof(char) * initial_capacity);
     *arena = (struct Arena){
         .memory = mem,
-        .alloced = mem ? true : false,
+        .alloced = true,
         .at = 0,
-        .cap = mem ? initial_capacity : 0,
+        .cap = initial_capacity,
     };
 }
 
@@ -67,24 +66,9 @@ void arena_init_static_from_buffer(struct Arena *arena, void *buffer, size_t buf
 
 void *arena_alloc(struct Arena *arena, size_t size) {
     assert(arena);
-    if (arena->alloced && arena->cap < arena->at + size) {
-        size_t new_cap = arena->cap;
-        if (!new_cap) new_cap = 1;
-        while (new_cap < arena->at + size) new_cap *= 2;
-        void *new = realloc(arena->memory, new_cap);
-        arena->cap = new_cap;
-        arena->memory = new;
-    }
     void *mem = (char *)arena->memory + arena->at;
     arena->at += size;
     return mem;
-}
-
-void arena_reserve(struct Arena *arena, size_t capacity) {
-    assert(arena);
-    void *new = realloc(arena->memory, capacity);
-    arena->cap = capacity;
-    arena->memory = new;
 }
 
 void arena_reset(struct Arena *arena) {
@@ -93,31 +77,30 @@ void arena_reset(struct Arena *arena) {
 }
 
 size_t arena_capacity(struct Arena *arena) {
+    assert(arena);
     return arena->cap;
 }
 
 size_t arena_allocated(struct Arena *arena) {
+    assert(arena);
     return arena->at;
 }
 
 bool arena_is_static(struct Arena *arena) {
+    assert(arena);
     return !arena->alloced;
 }
 
 struct Arena *arena_try_create(size_t initial_capacity) {
-    struct Arena *arena = malloc(sizeof(*arena));
+    struct Arena *arena = malloc(sizeof(*arena) + sizeof(char) * initial_capacity);
     if (!arena) return NULL;
 
     *arena = (struct Arena){
-        .memory = malloc(sizeof(char) * initial_capacity),
+        .memory = arena + 1,
         .alloced = true,
         .at = 0,
         .cap = initial_capacity,
     };
-    if (!arena->memory) {
-        free(arena);
-        return NULL;
-    }
     return arena;
 }
 
@@ -137,11 +120,10 @@ struct Arena *arena_try_create_static_from_buffer(void *buffer, size_t buffer_ca
 bool arena_try_destroy(struct Arena **arena) {
     assert(arena);
     assert(*arena);
-    bool ok = (*arena)->alloced;
-    if (ok)
-        free(*arena);
+    bool success = (*arena)->alloced;
+    if (success) free(*arena);
     *arena = NULL;
-    return ok;
+    return success;
 
 }
 
@@ -185,25 +167,8 @@ bool arena_try_deinit(struct Arena *arena) {
 
 void *arena_try_alloc(struct Arena *arena, size_t size) {
     assert(arena);
-    if (arena->alloced && arena->cap < arena->at + size) {
-        size_t new_cap = arena->cap;
-        if (!new_cap) new_cap = 1;
-        while (new_cap < arena->at + size) new_cap *= 2;
-        void *new = realloc(arena->memory, new_cap);
-        if (!new) return NULL;
-        arena->cap = new_cap;
-        arena->memory = new;
-    }
+    if (arena->alloced && arena->cap < arena->at + size) return NULL;
     void *mem = (char *)arena->memory + arena->at;
     arena->at += size;
     return mem;
-}
-
-bool arena_try_reserve(struct Arena *arena, size_t capacity) {
-    assert(arena);
-    void *new = realloc(arena->memory, capacity);
-    if (!new) return false;
-    arena->cap = capacity;
-    arena->memory = new;
-    return true;
 }
