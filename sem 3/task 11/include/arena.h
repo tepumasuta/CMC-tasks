@@ -25,7 +25,6 @@ void arena_init_static_from_buffer(struct Arena *arena, void *buffer, size_t buf
 /* Fast methods without checks */
 void *arena_alloc(struct Arena *arena, size_t size);
 // Assumes arena alloced
-void arena_reserve(struct Arena *arena, size_t capacity);
 void arena_reset(struct Arena *arena);
 
 /* Info methods */
@@ -43,7 +42,5 @@ bool arena_try_init_static_from_buffer(struct Arena *arena, void *buffer, size_t
 bool arena_try_deinit(struct Arena *arena);
 
 void *arena_try_alloc(struct Arena *arena, size_t size);
-bool arena_try_reserve(struct Arena *arena, size_t capacity);
-
 
 #endif
