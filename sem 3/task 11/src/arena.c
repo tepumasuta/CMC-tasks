@@ -291,7 +291,7 @@ void *arena_dynamic_try_get_memory(struct ArenaDynamic *arena, ArenaOffset offse
 bool arena_dynamic_try_reserve(struct ArenaDynamic *arena, size_t capacity) {
     assert(arena);
     if (arena->cap >= capacity) return true;
-    void *new_mem = realloc(arena, capacity);
+    void *new_mem = realloc(arena->memory, capacity);
     if (!new_mem) return false;
     arena->memory = new_mem;
     arena->cap = capacity;
@@ -301,3 +301,29 @@ bool arena_dynamic_try_reserve(struct ArenaDynamic *arena, size_t capacity) {
 ArenaOffset arena_dynamic_at(struct ArenaDynamic *arena) {
     return arena->at;
 }
+
+bool arena_dynamic_try_init(struct ArenaDynamic *arena, size_t initial_capacity) {
+    assert(arena);
+    assert(initial_capacity > 0);
+    *arena = (struct ArenaDynamic){
+        .memory = malloc(sizeof(char) * initial_capacity),
+        .cap = initial_capacity,
+        .at = 0,
+    };
+    if (!arena->memory) return false;
+    return true;
+
+}
+
+bool arena_dynamic_try_deinit(struct ArenaDynamic *arena) {
+    assert(arena);
+    bool success = arena->memory;
+    free(arena->memory);
+    *arena = (struct ArenaDynamic){
+        .memory = NULL,
+        .cap = 0,
+        .at = 0,
+    };
+    return success;
+}
+

@@ -60,6 +60,8 @@ bool arena_static_try_init_static_from_buffer(struct ArenaStatic *arena, void *b
 bool arena_static_try_deinit(struct ArenaStatic *arena);
 struct ArenaDynamic *arena_dynamic_try_create(size_t initial_capacity);
 bool arena_dynamic_try_destroy(struct ArenaDynamic **arena);
+bool arena_dynamic_try_init(struct ArenaDynamic *arena, size_t initial_capacity);
+bool arena_dynamic_try_deinit(struct ArenaDynamic *arena);
 
 void *arena_static_try_alloc(struct ArenaStatic *arena, size_t size);
 bool arena_dynamic_try_alloc(struct ArenaDynamic *arena, size_t size, ArenaOffset *offset);
