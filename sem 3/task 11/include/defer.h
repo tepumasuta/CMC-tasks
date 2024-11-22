@@ -3,8 +3,8 @@
 
 #include "arena.h"
 
-#ifndef DEFER_SYSTEM_DEFAULT_ENTRIES_CAP
-#define DEFER_SYSTEM_DEFAULT_ENTRIES_CAP 1024
+#ifndef DEFER_SYSTEM_DEFAULT_INITIAL_ENTRIES_CAP
+#define DEFER_SYSTEM_DEFAULT_INITIAL_ENTRIES_CAP 1024
 #endif
 
 typedef void (*defer_fn)(void *);
@@ -21,11 +21,11 @@ struct DeferSystem {
 };
 
 // Creates new arena with enough space to hold defer_system and capacity entries
-struct DeferSystem *defer_system_create(size_t capacity);
+struct DeferSystem *defer_system_create();
 void defer_system_destroy(struct DeferSystem **system);
 // Allocator that is passed, it is consumed and owned, thus new allocations outside
 // may result in UB. It will not be destroyed or deinit in the end
-void defer_system_init(struct DeferSystem *system, struct ArenaDynamic *allocator, size_t capacity);
+void defer_system_init(struct DeferSystem *system, struct ArenaDynamic *allocator);
 void defer_system_deinit(struct DeferSystem *system);
 
 // Data may be NULL if unused
@@ -34,11 +34,11 @@ void defer_system_do_defer(struct DeferSystem *system);
 
 /* Safe versions that do perform checks */
 // Creates new arena with enough space to hold defer_system and capacity entries
-struct DeferSystem *defer_system_try_create(size_t capacity);
+struct DeferSystem *defer_system_try_create();
 bool defer_system_try_destroy(struct DeferSystem **system);
 // Allocator that is passed, it is consumed and owned, thus new allocations outside
 // may result in UB. It will not be destroyed or deinit in the end
-bool defer_system_try_init(struct DeferSystem *system, struct ArenaDynamic *allocator, size_t capacity);
+bool defer_system_try_init(struct DeferSystem *system, struct ArenaDynamic *allocator);
 bool defer_system_try_deinit(struct DeferSystem *system);
 
 // Data may be NULL if unused

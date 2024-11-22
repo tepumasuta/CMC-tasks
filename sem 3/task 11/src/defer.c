@@ -3,8 +3,10 @@
 
 #include "defer.h"
 
-struct DeferSystem *defer_system_create(size_t capacity) {
-    struct ArenaDynamic *allocator = arena_dynamic_create(sizeof(lambda_t) * capacity);
+struct DeferSystem *defer_system_create() {
+    struct ArenaDynamic *allocator = arena_dynamic_create(
+        sizeof(lambda_t) * DEFER_SYSTEM_DEFAULT_INITIAL_ENTRIES_CAP
+    );
     struct DeferSystem *system = malloc(sizeof(*system));
     *system = (struct DeferSystem){
         .allocator = allocator,
@@ -23,11 +25,13 @@ void defer_system_destroy(struct DeferSystem **system) {
     *system = NULL;
 }
 
-void defer_system_init(struct DeferSystem *system, struct ArenaDynamic *allocator, size_t capacity) {
+void defer_system_init(struct DeferSystem *system, struct ArenaDynamic *allocator) {
     assert(system);
     bool own = false;
     if (!allocator) {
-        allocator = arena_dynamic_create(sizeof(lambda_t) * capacity);
+        allocator = arena_dynamic_create(
+            sizeof(lambda_t) * DEFER_SYSTEM_DEFAULT_INITIAL_ENTRIES_CAP
+        );
         own = true;
     }
     *system = (struct DeferSystem){
@@ -68,8 +72,10 @@ void defer_system_do_defer(struct DeferSystem *system) {
         entries[i].func(entries[i].data);
 }
 
-struct DeferSystem *defer_system_try_create(size_t capacity) {
-    struct ArenaDynamic *allocator = arena_dynamic_try_create(sizeof(lambda_t) * capacity);
+struct DeferSystem *defer_system_try_create() {
+    struct ArenaDynamic *allocator = arena_dynamic_try_create(
+        sizeof(lambda_t) * DEFER_SYSTEM_DEFAULT_INITIAL_ENTRIES_CAP
+    );
     if (!allocator) return NULL;
     struct DeferSystem *system = malloc(sizeof(*system));
     if (!system) {
@@ -94,11 +100,11 @@ bool defer_system_try_destroy(struct DeferSystem **system) {
     return true;
 }
 
-bool defer_system_try_init(struct DeferSystem *system, struct ArenaDynamic *allocator, size_t capacity) {
+bool defer_system_try_init(struct DeferSystem *system, struct ArenaDynamic *allocator) {
     assert(system);
     bool own = false;
     if (!allocator) {
-        allocator = arena_dynamic_create(capacity);
+        allocator = arena_dynamic_create(DEFER_SYSTEM_DEFAULT_INITIAL_ENTRIES_CAP);
         if (!allocator) return false;
     }
     own = true;
