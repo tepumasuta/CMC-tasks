@@ -49,6 +49,7 @@ size_t arena_static_allocated(struct ArenaStatic *arena);
 bool arena_static_is_from_buffer(struct ArenaStatic *arena);  
 size_t arena_dynamic_capacity(struct ArenaDynamic *arena);
 size_t arena_dynamic_allocated(struct ArenaDynamic *arena);
+ArenaOffset arena_dynamic_at(struct ArenaDynamic *arena);
 
 /* Safe methods with checks */
 struct ArenaStatic *arena_static_try_create(size_t capacity);

@@ -298,3 +298,6 @@ bool arena_dynamic_try_reserve(struct ArenaDynamic *arena, size_t capacity) {
     return true;
 }
 
+ArenaOffset arena_dynamic_at(struct ArenaDynamic *arena) {
+    return arena->at;
+}
