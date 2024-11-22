@@ -69,7 +69,7 @@ void defer_system_do_defer(struct DeferSystem *system) {
     const size_t at = system->entries_at;
     lambda_t *const entries = arena_dynamic_get_memory(system->allocator, system->entries_base);
     for (size_t i = 0; i < at; i++)
-        entries[i].func(entries[i].data);
+        entries[at - 1 - i].func(entries[at - 1 - i].data);
 }
 
 struct DeferSystem *defer_system_try_create() {
