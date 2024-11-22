@@ -4,43 +4,44 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-struct Arena {
+// Non-expandable pointer reliable arena
+struct ArenaStatic {
     void *memory;
     size_t cap, at;
     bool alloced;
 };
 
 /* Heap memory allocation */
-struct Arena *arena_create(size_t initial_capacity);
-struct Arena *arena_create_static_from_buffer(void *buffer, size_t buffer_capacity);
-void arena_destroy(struct Arena **arena);
+struct ArenaStatic *arena_static_create(size_t capacity);
+struct ArenaStatic *arena_static_create_static_from_buffer(void *buffer, size_t buffer_capacity);
+void arena_static_destroy(struct ArenaStatic **arena);
 
 /* In-place memory allocation */
-void arena_init(struct Arena *arena, size_t initial_capacity);
+void arena_static_init(struct ArenaStatic *arena, size_t capacity);
 // Doesn't have to be deallocated
-void arena_init_static_from_buffer(struct Arena *arena, void *buffer, size_t buffer_capacity);
-void arena_deinit(struct Arena *arena);
+void arena_static_init_static_from_buffer(struct ArenaStatic *arena, void *buffer, size_t buffer_capacity);
+void arena_static_deinit(struct ArenaStatic *arena);
 
 
 /* Fast methods without checks */
-void *arena_alloc(struct Arena *arena, size_t size);
+void *arena_static_alloc(struct ArenaStatic *arena, size_t size);
 // Assumes arena alloced
-void arena_reset(struct Arena *arena);
+void arena_static_reset(struct ArenaStatic *arena);
 
 /* Info methods */
-size_t arena_capacity(struct Arena *arena);
-size_t arena_allocated(struct Arena *arena);
+size_t arena_static_capacity(struct ArenaStatic *arena);
+size_t arena_static_allocated(struct ArenaStatic *arena);
 // Whether was created from buffer
-bool arena_is_static(struct Arena *arena);  
+bool arena_static_is_from_buffer(struct ArenaStatic *arena);  
 
 /* Safe methods with checks */
-struct Arena *arena_try_create(size_t initial_capacity);
-struct Arena *arena_try_create_static_from_buffer(void *buffer, size_t buffer_capacity);
-bool arena_try_destroy(struct Arena **arena);
-bool arena_try_init(struct Arena *arena, size_t initial_capacity);
-bool arena_try_init_static_from_buffer(struct Arena *arena, void *buffer, size_t buffer_capacity);
-bool arena_try_deinit(struct Arena *arena);
+struct ArenaStatic *arena_static_try_create(size_t capacity);
+struct ArenaStatic *arena_static_try_create_static_from_buffer(void *buffer, size_t buffer_capacity);
+bool arena_static_try_destroy(struct ArenaStatic **arena);
+bool arena_static_try_init(struct ArenaStatic *arena, size_t capacity);
+bool arena_static_try_init_static_from_buffer(struct ArenaStatic *arena, void *buffer, size_t buffer_capacity);
+bool arena_static_try_deinit(struct ArenaStatic *arena);
 
-void *arena_try_alloc(struct Arena *arena, size_t size);
+void *arena_static_try_alloc(struct ArenaStatic *arena, size_t size);
 
 #endif
