@@ -3,6 +3,7 @@ project("radsh") # re-bourne disabled again shell
 
 SET(SRCS
     src/arena.c
+    src/defer.c
 )
 
 add_library(radshlib STATIC ${SRCS})
