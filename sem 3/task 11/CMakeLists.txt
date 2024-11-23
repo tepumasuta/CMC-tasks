@@ -7,6 +7,7 @@ SET(SRCS
     src/string_view.c
     src/token.c
     src/lexer.c
+    src/ast.c
 )
 
 set(CMAKE_C_COMPILER "gcc")
