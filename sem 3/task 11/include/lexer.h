@@ -12,11 +12,6 @@ enum LexerError {
     LEXER_ERROR_FAILED_TO_ALLOC,
 };
 
-typedef struct {
-    struct Token *start;
-    size_t length;
-} token_view_t;
-
 enum LexerError lexer_lex(string_view_t command, struct ArenaStatic **symtable,
                           token_view_t *lexed_tokens, struct ArenaDynamic *token_allocator);
 

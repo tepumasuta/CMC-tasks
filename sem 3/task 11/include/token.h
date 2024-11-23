@@ -41,6 +41,11 @@ struct Token {
     };
 };
 
+typedef struct {
+    struct Token *start;
+    size_t length;
+} token_view_t;
+
 size_t token_operator_precedence(enum TokenOperator op);
 
 #endif
