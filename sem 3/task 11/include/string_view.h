@@ -52,6 +52,8 @@ string_view_t sv_find(string_view_t string_view, string_view_t prefix);
 string_view_t sv_find_last(string_view_t string_view, string_view_t prefix);
 string_view_t sv_find_symbol(string_view_t string_view, char symbol);
 string_view_t sv_find_symbol_last(string_view_t string_view, char symbol);
+string_view_t sv_find_symbol_any(string_view_t string_view, string_view_t symbols);
+string_view_t sv_find_symbol_last_any(string_view_t string_view, string_view_t symbols);
 string_view_t sv_find_if(string_view_t string_view, sv_condition_fn condition);
 string_view_t sv_find_if_va(string_view_t string_view, sv_condition_va_fn condition, ...);
 
