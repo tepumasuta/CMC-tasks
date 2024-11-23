@@ -13,7 +13,7 @@ size_t token_operator_precedence(enum TokenOperator op) {
     case TOKEN_OPERATOR_AND:
     case TOKEN_OPERATOR_OR:
         return 2;
-    case TOKEN_OPERATOR_SEMICOLON:
+    case TOKEN_OPERATOR_SEMI:
     case TOKEN_OPERATOR_AMP:
         return 1;
     default:
