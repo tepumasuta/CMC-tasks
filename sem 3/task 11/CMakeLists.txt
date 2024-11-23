@@ -5,6 +5,7 @@ SET(SRCS
     src/arena.c
     src/defer.c
     src/string_view.c
+    src/token.c
 )
 
 set(CMAKE_C_COMPILER "gcc")
