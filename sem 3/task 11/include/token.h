@@ -48,4 +48,7 @@ typedef struct {
 
 size_t token_operator_precedence(enum TokenOperator op);
 
+void tv_chop(token_view_t *token_view);
+void tv_chop_n(token_view_t *token_view, size_t symbols_count);
+
 #endif
