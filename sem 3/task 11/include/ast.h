@@ -49,12 +49,6 @@ struct NodePipeline {
     struct NodePipeline *pipe;
 };
 
-enum NodeType {
-    NODE_TYPE_SEQUENCE = 0,
-    NODE_TYPE_SIZE,
-};
-
-
 struct AST {
     struct NodeShell *root;
     struct ArenaStatic *string_allocator;
@@ -66,5 +60,12 @@ void ast_node_basic_command_free(struct NodeBasicCommand *node);
 void ast_node_command_free(struct NodeCommand *node);
 void ast_node_io_pipe_free(struct NodeIOPipe *node);
 void ast_node_conditional_free(struct NodeConditional *node);
+
+void ast_print_node_shell(struct NodeShell *node);
+void ast_print_node_pipeline(struct NodePipeline *node);
+void ast_print_node_basic_command(struct NodeBasicCommand *node);
+void ast_print_node_command(struct NodeCommand *node);
+void ast_print_node_io_pipe(struct NodeIOPipe *node);
+void ast_print_node_conditional(struct NodeConditional *node);
 
 #endif
