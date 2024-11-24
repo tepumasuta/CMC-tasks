@@ -57,7 +57,7 @@ enum NodeType {
 
 struct AST {
     struct NodeShell *root;
-    struct ArenaDynamic *allocator;
+    struct ArenaStatic *string_allocator;
 };
 
 void ast_node_shell_free(struct NodeShell *node);
