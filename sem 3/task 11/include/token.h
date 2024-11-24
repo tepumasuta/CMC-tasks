@@ -47,6 +47,7 @@ typedef struct {
 } token_view_t;
 
 size_t token_operator_precedence(enum TokenOperator op);
+bool token_is_redirection(enum TokenOperator op);
 
 void tv_chop(token_view_t *token_view);
 void tv_chop_n(token_view_t *token_view, size_t symbols_count);
