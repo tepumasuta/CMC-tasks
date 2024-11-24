@@ -109,7 +109,7 @@ enum LexerError lexer_lex(string_view_t command, struct ArenaStatic **symtable,
     size_t tokens_at = token_allocator->at;
     enum LexerError error = LEXER_ERROR_NONE;
     struct Token current;
-    struct ArenaStatic *symtable_local = arena_static_try_create(command.length);
+    struct ArenaStatic *symtable_local = arena_static_try_create(command.length * 2);
     if (!symtable_local) return LEXER_ERROR_FAILED_TO_ALLOC;
     sv_trim_any(&command, spacing_symbols);
     size_t total_tokens = 0;
