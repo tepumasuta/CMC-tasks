@@ -6,92 +6,6 @@
 
 #define error_return(ERRVALUE) do { *error = (ERRVALUE); goto on_error; } while(0)
 
-static struct NodeShell *try_parse_shell_command(
-    token_view_t tokens, struct ArenaStatic *string_allocator,
-    enum ParserError *error, size_t *chop_count, bool new_shell
-);
-
-static struct NodeBasicCommand *try_parse_basic_command(
-    token_view_t tokens, struct ArenaStatic *string_allocator,
-    size_t *chop_count, enum ParserError *error
-) {
-    assert(string_allocator);
-    assert(chop_count);
-    if (!tokens.length || tokens.start->type != TOKEN_TYPE_SYMBOL) {
-        *error = PARSER_ERROR_EXPECTED_SYMBOL;
-        return NULL;
-    }
-    size_t i, total_args_length = 0;
-
-    for (i = 1; i < tokens.length; i++) {
-        if (tokens.start[i].type != TOKEN_TYPE_SYMBOL)
-            break;
-        total_args_length += tokens.start[i].as_symbol.symbol.length + 1;
-    }
-    *chop_count = i;
-
-    char **args = arena_static_alloc(string_allocator, sizeof(*args) * i);
-    args[i - 1] = NULL;
-    for (size_t j = 0; j < i - 1; j++) {
-        args[j] = arena_static_alloc(string_allocator, tokens.start[j + 1].as_symbol.symbol.length + 1);
-        memcpy(args[j],
-               tokens.start[j + 1].as_symbol.symbol.start,
-               tokens.start[j + 1].as_symbol.symbol.length + 1);
-    }
-    char *command = arena_static_alloc(string_allocator, tokens.start->as_symbol.symbol.length + 1);
-    memcpy(command,
-            tokens.start->as_symbol.symbol.start,
-            tokens.start->as_symbol.symbol.length + 1);
-
-    struct NodeBasicCommand *node = malloc(sizeof(*node));
-    if (!node) error_return(PARSER_ERROR_FAILED_TO_ALLOC);
-    *node = (struct NodeBasicCommand){
-        .name = command,
-        .args = args,
-    };
-    return node;
-on_error:
-    return NULL;
-}
-
-static struct NodePipeline *try_parse_pipeline(
-    token_view_t tokens, struct ArenaStatic *string_allocator,
-    enum ParserError *error, size_t *chop_count
-) {
-    assert(string_allocator);
-    assert(error);
-    assert(chop_count);
-    size_t count;
-    struct NodeBasicCommand *command = NULL;
-    struct NodePipeline *node = NULL;
-    command = try_parse_basic_command(tokens, string_allocator, &count, error);
-    if (*error != PARSER_ERROR_NONE) error_return(*error);
-    if (!command) return NULL;
-    tv_chop_n(&tokens, count);
-    node = malloc(sizeof(*node));
-    if (!node) error_return(PARSER_ERROR_FAILED_TO_ALLOC);
-    if (!tokens.length || tokens.start->type != TOKEN_TYPE_OPERATOR
-        || tokens.start->as_operator != TOKEN_OPERATOR_PIPE
-    ) {
-        *node = (struct NodePipeline){ .command = command, .pipe = NULL };
-        *chop_count = count;
-        return node;
-    } else {
-        tv_chop(&tokens);
-        size_t additional_count;
-        struct NodePipeline *pipe_node = try_parse_pipeline(tokens, string_allocator, error, &additional_count);
-        if (*error != PARSER_ERROR_NONE) error_return(*error);
-        if (!pipe_node) error_return(PARSER_ERROR_INVALID_PIPE);
-        *node = (struct NodePipeline) { .command = command, .pipe = pipe_node };
-        *chop_count = count + additional_count + 1;
-        return node;
-    }
-    assert(0 && "Unreachable");
-on_error:
-    if (command) ast_node_basic_command_free(command);
-    if (node) free(node);
-    return NULL;
-}
 
 static bool try_parse_redirection_input(token_view_t tokens, char **input, enum ParserError *error) {
     assert(input);
@@ -105,6 +19,10 @@ static bool try_parse_redirection_input(token_view_t tokens, char **input, enum 
     }
     if (tokens.start[1].type != TOKEN_TYPE_SYMBOL) {
         *error = PARSER_ERROR_INVALID_REDIRECTION;
+        return true;
+    }
+    if (*input != NULL) {
+        *error = PARSER_ERROR_DOUBLE_REDIRECTION;
         return true;
     }
     *input = (char *)tokens.start[1].as_symbol.symbol.start;
@@ -125,6 +43,10 @@ static bool try_parse_redirection_output(token_view_t tokens, char **output, enu
         *error = PARSER_ERROR_INVALID_REDIRECTION;
         return true;
     }
+    if (*output != NULL) {
+        *error = PARSER_ERROR_DOUBLE_REDIRECTION;
+        return true;
+    }
     *output = (char *)tokens.start[1].as_symbol.symbol.start;
     return true;
 }
@@ -141,6 +63,10 @@ static bool try_parse_redirection_append(token_view_t tokens, char **output, enu
     }
     if (tokens.start[1].type != TOKEN_TYPE_SYMBOL) {
         *error = PARSER_ERROR_INVALID_REDIRECTION;
+        return true;
+    }
+    if (*output != NULL) {
+        *error = PARSER_ERROR_DOUBLE_REDIRECTION;
         return true;
     }
     *output = (char *)tokens.start[1].as_symbol.symbol.start;
@@ -194,130 +120,173 @@ static bool try_parse_redirection(
     return true;
 }
 
-static bool try_parse_redirection_end(token_view_t tokens, char **output, enum ParserError *error, bool *append) {
-    char *new_output;
-    if (try_parse_redirection_output(tokens, &new_output, error)) {
-        if (*error != PARSER_ERROR_NONE) return true;
-        tv_chop_n(&tokens, 2);
-        if (try_parse_redirection_append(tokens, &new_output, error)) {
-            if (*error != PARSER_ERROR_NONE) return true;
-            *error = PARSER_ERROR_DOUBLE_REDIRECTION;
-            return true;
-        }
-        *append = false;
-        *output = new_output;
-        return true;
+static struct NodeBasicCommand *try_parse_basic_command(
+    token_view_t tokens, struct ArenaStatic *string_allocator,
+    size_t *chop_count, enum ParserError *error
+) {
+    assert(string_allocator);
+    assert(chop_count);
+    if (!tokens.length
+        || tokens.start->type != TOKEN_TYPE_SYMBOL
+        && tokens.start->type != TOKEN_TYPE_OPERATOR
+        && !token_is_redirection(tokens.start->as_operator))
+    {
+        return NULL;
     }
-    if (try_parse_redirection_append(tokens, &new_output, error)) {
-        if (*error != PARSER_ERROR_NONE) return true;
-        tv_chop_n(&tokens, 2);
-        if (try_parse_redirection_output(tokens, &new_output, error)) {
-            if (*error != PARSER_ERROR_NONE) return true;
-            *error = PARSER_ERROR_DOUBLE_REDIRECTION;
-            return true;
+
+    size_t i = 0, total_args_length = 0, symbols = 0;
+    char *input = NULL, *output = NULL;
+    bool append = false;
+    while (
+        i < tokens.length && (tokens.start[i].type == TOKEN_TYPE_SYMBOL
+        || tokens.start[i].type == TOKEN_TYPE_OPERATOR
+        && token_is_redirection(tokens.start[i].as_operator))
+    ) {
+        if (tokens.start[i].type == TOKEN_TYPE_SYMBOL) {
+            total_args_length += tokens.start[i].as_symbol.symbol.length + 1;
+            i++;
+            symbols++;
+        } else {
+            token_view_t now = (token_view_t){ .start = tokens.start + i, .length = tokens.length - i };
+            size_t count = 0;
+            bool result = try_parse_redirection(now, &input, &output, &append, error, &count);
+            if (*error != PARSER_ERROR_NONE) error_return(*error);
+            i += count;
         }
-        *append = true;
-        *output = new_output;
-        return true;
     }
-    return false;
+    *chop_count = i;
+
+    char **args = arena_static_alloc(string_allocator, sizeof(*args) * (symbols + 1));
+    args[symbols] = NULL;
+    size_t k = 0;
+    for (size_t j = 0; j < i;) {
+        if (tokens.start[j].type == TOKEN_TYPE_OPERATOR) { j += 2; continue; }
+        assert(k < symbols);
+        args[k] = arena_static_alloc(string_allocator, tokens.start[j].as_symbol.symbol.length + 1);
+        memcpy(args[k],
+               tokens.start[j].as_symbol.symbol.start,
+               tokens.start[j].as_symbol.symbol.length + 1);
+        k++;
+        j++;
+    }
+    char *command = args[0];
+
+    struct NodeBasicCommand *node = malloc(sizeof(*node));
+    if (!node) error_return(PARSER_ERROR_FAILED_TO_ALLOC);
+    *node = (struct NodeBasicCommand){
+        .name = command,
+        .args = args,
+        .input = input,
+        .output = output,
+        .append = append,
+    };
+    return node;
+on_error:
+    return NULL;
 }
 
-static struct NodeCommand *try_parse_command(
+static struct NodeShell *try_parse_shell_command(
+    token_view_t tokens, struct ArenaStatic *string_allocator,
+    enum ParserError *error, size_t *chop_count, bool new_shell
+);
+
+static struct NodeShell *try_parse_redirected_shell_command(
+    token_view_t tokens, struct ArenaStatic *string_allocator,
+    enum ParserError *error, size_t *chop_count
+) {
+    assert(string_allocator);
+    assert(error);
+    char *input = NULL, *output = NULL;
+    bool append = false;
+    struct NodeShell *node = NULL;
+    size_t count = 0;
+    size_t additional_count = 0;
+    if (try_parse_redirection(tokens, &input, &output, &append, error, &additional_count))
+        if (*error != PARSER_ERROR_NONE) error_return(*error);
+    tv_chop_n(&tokens, additional_count);
+    if (tokens.start->as_syntax == TOKEN_SYNTAX_CPAREN) error_return(PARSER_ERROR_INVALID_PAREN_CLOSE_FIRST);
+    if (tokens.start->as_syntax != TOKEN_SYNTAX_OPAREN) return NULL;
+    size_t at;
+    int parenthesis = 1;
+    for (at = 1; at < tokens.length; at++) {
+        if (tokens.start[at].type == TOKEN_TYPE_SYNTAX) {
+            switch (tokens.start[at].as_syntax) {
+            case TOKEN_SYNTAX_OPAREN: parenthesis++; break;
+            case TOKEN_SYNTAX_CPAREN: parenthesis--; break;
+            case TOKEN_SYNTAX_SIZE: assert(0 && "Unreachable");
+            default:
+            }
+            if (!parenthesis) break;
+        }
+    }
+    if (at == tokens.length) error_return(PARSER_ERROR_UNCLOSED_PAREN);
+    count += additional_count;
+    node = try_parse_shell_command(
+        (token_view_t){ .start=tokens.start + 1, .length = at - 1 },
+        string_allocator, error, &additional_count, true
+    );
+    if (*error != PARSER_ERROR_NONE) error_return(*error);
+    if (!node) error_return(PARSER_ERROR_NONSHELL_INSIDE_PAREN);
+    tv_chop_n(&tokens, additional_count + 2);
+    count += additional_count + 2;
+    additional_count = 0;
+    if (try_parse_redirection(tokens, &input, &output, &append, error, &additional_count))
+        if (*error != PARSER_ERROR_NONE) error_return(*error);
+    node->append = append;
+    node->input = input;
+    node->output = output;
+    *chop_count = count + additional_count;
+    return node;
+on_error:
+    if (node) ast_node_shell_free(node);
+    return NULL;
+}
+
+static struct NodePipeline *try_parse_pipeline(
     token_view_t tokens, struct ArenaStatic *string_allocator,
     enum ParserError *error, size_t *chop_count
 ) {
     assert(string_allocator);
     assert(error);
     assert(chop_count);
-    char *input = NULL, *output = NULL;
-    bool append;
-    size_t count, additional_count;
-    struct NodePipeline *pipe = NULL;
-    struct NodeCommand *node = NULL;
+    size_t count;
+    struct NodeBasicCommand *command = NULL;
     struct NodeShell *shell = NULL;
-    if (try_parse_redirection(tokens, &input, &output, &append, error, &count)) {
-        if (*error != PARSER_ERROR_NONE) error_return(*error);
-        tv_chop_n(&tokens, count);
-        enum NodeCommandType type;
-        if (input != NULL && output != NULL) { type = NODE_COMMAND_IO_PIPE; }
-        else if (input == NULL && output != NULL) { error_return(PARSER_ERROR_INVALID_COMMAND_START); }
-        else { type = NODE_COMMAND_I_PIPE_O; }
-        pipe = try_parse_pipeline(tokens, string_allocator, error, &additional_count);
-        if (*error != PARSER_ERROR_NONE) error_return(*error);
-        if (!pipe) error_return(PARSER_ERROR_INVALID_COMMAND);
-        tv_chop_n(&tokens, additional_count);
-        node = malloc(sizeof(*node));
-        if (!node) error_return(PARSER_ERROR_FAILED_TO_ALLOC);
-        struct NodeIOPipe *ionode = malloc(sizeof(*ionode));
-        if (!ionode) error_return(PARSER_ERROR_FAILED_TO_ALLOC);
-        *ionode = (struct NodeIOPipe){ .append = append, .input = input, .output = output, .pipe = pipe };
-        *node = (struct NodeCommand){ .type = type, .io_pipe = ionode };
-        if (type == NODE_COMMAND_IO_PIPE) {
-            *chop_count = count + additional_count;
-            return node;
-        }
-        if (try_parse_redirection_end(tokens, &output, error, &append)) {
-            if (*error != PARSER_ERROR_NONE) error_return(*error);
-            node->io_pipe->output = output;
-            node->io_pipe->append = append;
-            additional_count += 2;
-        }
-        *chop_count = count + additional_count;
-        return node;
-    }
-    if (pipe = try_parse_pipeline(tokens, string_allocator, error, &count)) {
-        tv_chop_n(&tokens, count);
-        node = malloc(sizeof(*node));
-        if (!node) error_return(PARSER_ERROR_FAILED_TO_ALLOC);
-        struct NodeIOPipe *ionode = malloc(sizeof(*ionode));
-        if (!ionode) error_return(PARSER_ERROR_FAILED_TO_ALLOC);
-        if (try_parse_redirection(tokens, &input, &output, &append, error, &additional_count)) {
-            if (*error != PARSER_ERROR_NONE) error_return(*error);
-        } else {
-            additional_count = 0;
-        }
-        *ionode = (struct NodeIOPipe){ .append = append, .input = input, .output = output, .pipe = pipe };
-        *node = (struct NodeCommand){ .type = NODE_COMMAND_PIPE_IO, .io_pipe = ionode };
-        *chop_count = count + additional_count;
-        return node;
-    }
+    struct NodePipeline *node = NULL;
+    command = try_parse_basic_command(tokens, string_allocator, &count, error);
     if (*error != PARSER_ERROR_NONE) error_return(*error);
-    if (tokens.length > 0 && tokens.start->type == TOKEN_TYPE_SYNTAX) {
-        if (tokens.start->as_syntax == TOKEN_SYNTAX_CPAREN)
-            error_return(PARSER_ERROR_INVALID_PAREN_CLOSE_FIRST);
-        if (tokens.start->as_syntax != TOKEN_SYNTAX_OPAREN) return NULL;
-        size_t at;
-        int parenthesis = 1;
-        for (at = 1; at < tokens.length; at++) {
-            if (tokens.start[at].type == TOKEN_TYPE_SYNTAX) {
-                switch (tokens.start[at].as_syntax) {
-                case TOKEN_SYNTAX_OPAREN: parenthesis++; break;
-                case TOKEN_SYNTAX_CPAREN: parenthesis--; break;
-                case TOKEN_SYNTAX_SIZE: assert(0 && "Unreachable");
-                default:
-                }
-                if (!parenthesis) break;
-            }
-        }
-        if (at == tokens.length) error_return(PARSER_ERROR_UNCLOSED_PAREN);
-        shell = try_parse_shell_command(
-            (token_view_t){ .start=tokens.start + 1, .length = at - 1 },
-            string_allocator, error, &count, true
-        );
+    if (!command) {
+        shell = try_parse_redirected_shell_command(tokens, string_allocator, error, &count);
         if (*error != PARSER_ERROR_NONE) error_return(*error);
-        if (!shell) error_return(PARSER_ERROR_NONSHELL_INSIDE_PAREN);
-        node = malloc(sizeof(*node));
-        if (!node) error_return(PARSER_ERROR_FAILED_TO_ALLOC);
-        *node = (struct NodeCommand){ .type = NODE_COMMAND_SHELL, .command=shell };
-        *chop_count = count + 2;
+    }
+    tv_chop_n(&tokens, count);
+    node = malloc(sizeof(*node));
+    if (!node) error_return(PARSER_ERROR_FAILED_TO_ALLOC);
+    if (!tokens.length || tokens.start->type != TOKEN_TYPE_OPERATOR
+        || tokens.start->as_operator != TOKEN_OPERATOR_PIPE
+    ) {
+        node->pipe = NULL;
+        node->type = command ? NODE_BASICITY_BASIC : NODE_BASICITY_SHELL;
+        if (command) node->command = command;
+        else node->shell = shell;
+        *chop_count = count;
         return node;
     }
-    return NULL;
+    tv_chop(&tokens);
+    size_t additional_count;
+    struct NodePipeline *pipe_node = try_parse_pipeline(tokens, string_allocator, error, &additional_count);
+    if (*error != PARSER_ERROR_NONE) error_return(*error);
+    if (!pipe_node) error_return(PARSER_ERROR_INVALID_PIPE);
+    node->pipe = pipe_node;
+    node->type = command ? NODE_BASICITY_BASIC : NODE_BASICITY_SHELL;
+    if (command) node->command = command;
+    else node->shell = shell;
+    *chop_count = count + additional_count + 1;
+    return node;
 on_error:
-    if (pipe) ast_node_pipeline_free(pipe);
-    if (node) free(node);
     if (shell) ast_node_shell_free(shell);
+    if (command) ast_node_basic_command_free(command);
+    if (node) free(node);
     return NULL;
 }
 
@@ -329,16 +298,16 @@ static struct NodeConditional *try_parse_conditional(
     assert(error);
     assert(chop_count);
     size_t count;
-    struct NodeCommand *command = NULL;
+    struct NodePipeline *pipeline = NULL;
     struct NodeConditional *node = NULL;
-    command = try_parse_command(tokens, string_allocator, error, &count);
+    pipeline = try_parse_pipeline(tokens, string_allocator, error, &count);
     if (*error != PARSER_ERROR_NONE) error_return(*error);
-    if (!command) return NULL;
+    if (!pipeline) return NULL;
     tv_chop_n(&tokens, count);
     node = malloc(sizeof(*node));
     if (!node) error_return(PARSER_ERROR_FAILED_TO_ALLOC);
     if (!tokens.length || tokens.start->type != TOKEN_TYPE_OPERATOR) {
-        *node = (struct NodeConditional){ .command=command, .next=NULL };
+        *node = (struct NodeConditional){ .commands=pipeline, .next=NULL };
         *chop_count = count;
         return node;
     }
@@ -347,7 +316,7 @@ static struct NodeConditional *try_parse_conditional(
     case TOKEN_OPERATOR_OR: node->if_false = true; break;
     case TOKEN_OPERATOR_SIZE: assert(0 && "Unreachable");
     default:
-        *node = (struct NodeConditional){ .command=command, .next=NULL };
+        *node = (struct NodeConditional){ .commands=pipeline, .next=NULL };
         *chop_count = count;
         return node;
     }
@@ -356,12 +325,12 @@ static struct NodeConditional *try_parse_conditional(
     struct NodeConditional *next = try_parse_conditional(tokens, string_allocator, error, &additional_count);
     if (*error != PARSER_ERROR_NONE) error_return(*error);
     if (!next) error_return(PARSER_ERROR_INVALID_CONDITIONAL);
-    node->command = command;
+    node->commands = pipeline;
     node->next = next;
     *chop_count = count + additional_count + 1;
     return node;
 on_error:
-    if (command) ast_node_command_free(command);
+    if (pipeline) ast_node_pipeline_free(pipeline);
     if (node) free(node);
     return NULL;
 }
