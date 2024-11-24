@@ -1,0 +1,27 @@
+#ifndef PARSER_H
+#define PARSER_H 1
+
+#include "ast.h"
+#include "token.h"
+
+enum ParserError {
+    PARSER_ERROR_NONE = 0,
+    PARSER_ERROR_INCOMPLETE_REDIRECTION,
+    PARSER_ERROR_INVALID_REDIRECTION,
+    PARSER_ERROR_DOUBLE_REDIRECTION,
+    PARSER_ERROR_FAILED_TO_ALLOC,
+    PARSER_ERROR_INVALID_PIPE,
+    PARSER_ERROR_INVALID_COMMAND,
+    PARSER_ERROR_INVALID_COMMAND_START,
+    PARSER_ERROR_INVALID_PAREN_CLOSE_FIRST,
+    PARSER_ERROR_UNCLOSED_PAREN,
+    PARSER_ERROR_NONSHELL_INSIDE_PAREN,
+    PARSER_ERROR_INVALID_CONDITIONAL,
+    PARSER_ERROR_SHELL_LEFTOVER,
+    PARSER_ERROR_EMPTY,
+};
+
+enum ParserError parser_parse(token_view_t tokens, struct AST *parsed_ast,
+                              const struct ArenaStatic *symtable);
+
+#endif
