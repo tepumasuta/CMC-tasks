@@ -17,7 +17,10 @@ static struct NodeBasicCommand *try_parse_basic_command(
 ) {
     assert(string_allocator);
     assert(chop_count);
-    if (!tokens.length || tokens.start->type != TOKEN_TYPE_SYMBOL) return NULL;
+    if (!tokens.length || tokens.start->type != TOKEN_TYPE_SYMBOL) {
+        *error = PARSER_ERROR_EXPECTED_SYMBOL;
+        return NULL;
+    }
     size_t i, total_args_length = 0;
 
     for (i = 1; i < tokens.length; i++) {
