@@ -104,7 +104,7 @@ bool defer_system_try_init(struct DeferSystem *system, struct ArenaDynamic *allo
     assert(system);
     bool own = false;
     if (!allocator) {
-        allocator = arena_dynamic_create(DEFER_SYSTEM_DEFAULT_INITIAL_ENTRIES_CAP);
+        allocator = arena_dynamic_create(DEFER_SYSTEM_DEFAULT_INITIAL_ENTRIES_CAP * sizeof(lambda_t));
         if (!allocator) return false;
     }
     own = true;
