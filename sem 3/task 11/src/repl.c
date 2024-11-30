@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdarg.h>
+#include <math.h>
 
 char *repl_read_string(struct ArenaDynamic *allocator, enum ReplError *error) {
     assert(allocator);
@@ -65,4 +66,63 @@ void repl_printf_error(struct REPLSettings settings, const char *message, ...) {
     vfprintf(stderr, message, args);
     va_end(args);
     if (settings.colorized) fprintf(stderr, "\033[0m");
+}
+
+static void print(const char *string) {
+    fputs(string, stdout);
+}
+
+struct HSL {
+    double h, s, l;
+};
+
+struct RGB {
+    int r, g, b;
+};
+
+#define MAX(A,B) (((A)>(B))?(A):(B))
+#define MIN(A,B) (((A)<(B))?(A):(B))
+
+double hue2rgb(double p, double q, double t) {
+    if(t < 0.) t += 1.;
+    if(t > 1.) t -= 1.;
+    if(t < 1./6.) return p + (q - p) * 6. * t;
+    if(t < 1./2.) return q;
+    if(t < 2./3.) return p + (q - p) * (2./3. - t) * 6.;
+    return p;
+}
+
+
+struct RGB hslToRgb(double h, double s, double l) {
+    double r, g, b;
+
+    if (s == 0.) {
+        r = g = b = l; // achromatic
+    } else {
+        double q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        double p = 2. * l - q;
+        r = hue2rgb(p, q, h + 1./3.);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1./3.);
+    }
+
+    return (struct RGB){ .r=(r * 255.), .g=(g * 255.), .b=(b * 255.) };
+}
+
+
+const char *message = "TODO: Write a message";
+
+void repl_colorful_welcome(void) {
+    // "\033[38;2;146;255;12mTEXT\033[0m"
+    int j = 0;
+    for (int i = 0; i < strlen(message); i++) {
+        print("\033[38;2");
+        struct RGB rgb = hslToRgb((sin(0.15 * j + 1.93) + 1.0) / 2.0, 0.85, 0.75);
+        printf(";%d", rgb.r);
+        printf(";%d", rgb.g);
+        printf(";%d", rgb.b);
+        printf("m%c", message[i]);
+        if (message[i] != ' ' && message[i] != '\t' && message[i] != '\n') j++;
+    }
+    printf("\033[0m\n");
 }

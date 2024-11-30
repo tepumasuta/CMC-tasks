@@ -18,5 +18,6 @@ void repl_print_input_promt(struct Shell *shell, const struct REPLSettings setti
 void repl_print_fatal(struct REPLSettings settings, const char *message);
 void repl_print_error(struct REPLSettings settings, const char *message);
 void repl_printf_error(struct REPLSettings settings, const char *message, ...);
+void repl_colorful_welcome(void);
 
 #endif

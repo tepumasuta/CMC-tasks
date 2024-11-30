@@ -1,3 +1,8 @@
+/* TODO: Welcome */
+/* TODO: Argument * expansion */
+/* TODO: fg, bg */
+/* TODO: Colorful output for grep and ls */
+
 #include <stdlib.h>
 
 #include "arena.h"
@@ -80,6 +85,7 @@ int main(void) {
     enum ReplError error = REPL_ERROR_NONE;
     enum LexerError lex_error = LEXER_ERROR_NONE;
     enum ParserError parse_error = PARSER_ERROR_NONE;
+    repl_colorful_welcome();
     repl_print_input_promt(shell, settings);
     errno = 0;
     while ((string = repl_read_string(arena, &error)) || errno == EINTR) {

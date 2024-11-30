@@ -20,6 +20,7 @@ target_include_directories(radshlib PUBLIC "include")
 
 add_executable(radsh src/radsh.c)
 target_link_libraries(radsh radshlib)
+target_link_libraries(radsh m)
 
 foreach(target IN ITEMS radshlib radsh)
     target_compile_features(${target} PRIVATE c_std_17)
