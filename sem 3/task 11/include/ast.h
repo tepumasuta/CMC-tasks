@@ -18,7 +18,11 @@ struct NodeShell {
 };
 
 struct NodeConditional {
-    struct NodePipeline *commands;
+    bool many;
+    union {
+        struct NodePipeline *commands;
+        struct NodeBasicCommand *command;
+    };
     struct NodeConditional *next;
     bool if_false;
 };

@@ -13,7 +13,11 @@ void ast_node_shell_free(struct NodeShell *node) {
 
 void ast_node_conditional_free(struct NodeConditional *node) {
     if (!node) return;
-    if (node->commands) ast_node_pipeline_free(node->commands);
+    if (node->many) {
+        if (node->commands) ast_node_pipeline_free(node->commands);
+    } else {
+        if (node->command) ast_node_basic_command_free(node->command);
+    }
     if (node->next) ast_node_conditional_free(node->next);
     free(node);
 }
