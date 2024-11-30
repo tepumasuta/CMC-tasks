@@ -1,9 +1,11 @@
 #include "repl.h"
+#include "shell.h"
 
 #include <stdio.h>
 #include <errno.h>
 #include <assert.h>
 #include <string.h>
+#include <stdarg.h>
 
 char *repl_read_string(struct ArenaDynamic *allocator, enum ReplError *error) {
     assert(allocator);
@@ -40,6 +42,7 @@ void repl_print_input_promt(struct Shell *shell, const struct REPLSettings setti
     printf("%s", shell->cwd);
     if (settings.colorized) printf("\033[0m");
     printf(">");
+    fflush(stdout);
 }
 
 void repl_print_fatal(struct REPLSettings settings, const char *message) {
@@ -51,5 +54,15 @@ void repl_print_fatal(struct REPLSettings settings, const char *message) {
 void repl_print_error(struct REPLSettings settings, const char *message) {
     if (settings.colorized) fprintf(stderr, "\033[91m");
     fprintf(stderr, "[ERROR]: %s\n", message);
+    if (settings.colorized) fprintf(stderr, "\033[0m");
+}
+
+void repl_printf_error(struct REPLSettings settings, const char *message, ...) {
+    if (settings.colorized) fprintf(stderr, "\033[91m");
+    fputs("[ERROR]: ", stderr);
+    va_list args;
+    va_start(args, message);
+    vfprintf(stderr, message, args);
+    va_end(args);
     if (settings.colorized) fprintf(stderr, "\033[0m");
 }
