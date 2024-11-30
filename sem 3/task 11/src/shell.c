@@ -324,9 +324,20 @@ on_error:
     return false;
 }
 
+static void try_add_color(struct Shell *shell, struct NodeBasicCommand *command) {
+    if (!shell->main) return;
+    if (strcmp(command->name, "grep") && strcmp(command->name, "ls")) return;
+    int total = 0;
+    while (command->args[total++]);
+    for (int i = total; i > 1; i--)
+        command->args[i] = command->args[i - 1];
+    command->args[1] = "--color=auto";
+}
+
 static bool execute_basic_command(struct Shell *shell, struct NodeBasicCommand *command) {
     enum ShellError error = SHELL_ERROR_NONE;
     if (!execute_builtins(shell, command, &error) && error != SHELL_ERROR_NONE) error_exit_son();
+    try_add_color(shell, command);
     int result = execvp(command->name, command->args);
     if (result < 0) error_exit_son();
     return false;

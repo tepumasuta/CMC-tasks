@@ -1,7 +1,5 @@
-/* TODO: Welcome */
 /* TODO: Argument * expansion */
 /* TODO: fg, bg */
-/* TODO: Colorful output for grep and ls */
 
 #include <stdlib.h>
 

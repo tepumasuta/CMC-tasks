@@ -156,7 +156,7 @@ static struct NodeBasicCommand *try_parse_basic_command(
     }
     *chop_count = i;
 
-    char **args = arena_static_alloc(string_allocator, sizeof(*args) * (symbols + 1));
+    char **args = arena_static_alloc(string_allocator, sizeof(*args) * (symbols + 2));
     args[symbols] = NULL;
     size_t k = 0;
     for (size_t j = 0; j < i;) {
@@ -407,7 +407,7 @@ enum ParserError parser_parse(token_view_t tokens, struct AST *parsed_ast,
     for (size_t i = 0; i < tokens.length; i++)
         if (tokens.start[i].type == TOKEN_TYPE_SYMBOL)
             above_buf += sizeof(char *);
-    above_buf *= 2;
+    above_buf *= 3;
     struct ArenaStatic *allocator = arena_static_create(above_buf + symtable->at);
     size_t count;
     enum ParserError error = PARSER_ERROR_NONE;
