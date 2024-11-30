@@ -306,8 +306,17 @@ static struct NodeConditional *try_parse_conditional(
     tv_chop_n(&tokens, count);
     node = malloc(sizeof(*node));
     if (!node) error_return(PARSER_ERROR_FAILED_TO_ALLOC);
+    if (pipeline->type == NODE_BASICITY_BASIC && !pipeline->pipe) {
+        node->many = false;
+        node->command = pipeline->command;
+        pipeline->command = NULL;
+        ast_node_pipeline_free(pipeline);
+    } else {
+        node->many = true;
+        node->commands = pipeline;
+    }
     if (!tokens.length || tokens.start->type != TOKEN_TYPE_OPERATOR) {
-        *node = (struct NodeConditional){ .commands=pipeline, .next=NULL };
+        node->next = NULL;
         *chop_count = count;
         return node;
     }
@@ -316,7 +325,7 @@ static struct NodeConditional *try_parse_conditional(
     case TOKEN_OPERATOR_OR: node->if_false = true; break;
     case TOKEN_OPERATOR_SIZE: assert(0 && "Unreachable");
     default:
-        *node = (struct NodeConditional){ .commands=pipeline, .next=NULL };
+        node->next = NULL;
         *chop_count = count;
         return node;
     }
@@ -325,7 +334,6 @@ static struct NodeConditional *try_parse_conditional(
     struct NodeConditional *next = try_parse_conditional(tokens, string_allocator, error, &additional_count);
     if (*error != PARSER_ERROR_NONE) error_return(*error);
     if (!next) error_return(PARSER_ERROR_INVALID_CONDITIONAL);
-    node->commands = pipeline;
     node->next = next;
     *chop_count = count + additional_count + 1;
     return node;
