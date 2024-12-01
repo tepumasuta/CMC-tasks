@@ -229,6 +229,7 @@ void arena_dynamic_reserve(struct ArenaDynamic *arena, size_t capacity) {
     assert(arena);
     if (arena->cap >= capacity) return;
     arena->memory = realloc(arena->memory, capacity);
+    arena->cap = capacity;
 }
 
 void arena_dynamic_reset(struct ArenaDynamic *arena) {
