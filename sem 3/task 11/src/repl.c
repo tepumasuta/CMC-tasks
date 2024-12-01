@@ -110,7 +110,36 @@ struct RGB hslToRgb(double h, double s, double l) {
 }
 
 
-const char *message = "TODO: Write a message";
+static const char *message =
+"Welcome to RADSH (Re-bourne again dummy shell) !\n"
+"Currently supported features are:\n"
+"  - [X] Colored output\n"
+"  - [X] Argument expansion\n"
+"  - [X] This rainbow-ed message ;)\n"
+"  - [X] Builtins: cd, exit, type, welcome (prints this message)\n"
+"  - [X] Last command exit print code\n"
+"  - [X] ABSOLUTELY NO MEMORY LEAKAGE (even in children [on successful completion]) ((except for grep and ls in colored mode... but shhh~))\n"
+"  - [X] Colored grep and ls\n"
+"  - [X] Modern build system (CMake)\n"
+"  - [X] Signal handling (on SIGINT prints `^C` and doesn't die)\n"
+"\n"
+"Some basic ones:\n"
+"  - [X] REPL\n"
+"  - [X] Lexing of string into tokens\n"
+"  - [X] Parsing tokens into AST\n"
+"  - [X] Executing AST\n"
+"  - [X] Background\n"
+"  - [X] Pipes\n"
+"  - [X] Conditional\n"
+"  - [X] Redirection of EVERYTHING (subshells, commands. that's all.)\n"
+"\n"
+"Some unsupported features:\n"
+"  - [ ] Tab completion ;(\n"
+"  - [ ] history(((\n"
+"  - [ ] Arrows for navigating(((((((((\n"
+"  - [ ] ctrl+z (^Z)\n"
+"  - [ ] Reading after unclosed quote or parenthesis\n"
+;
 
 void repl_colorful_welcome(void) {
     // "\033[38;2;146;255;12mTEXT\033[0m"

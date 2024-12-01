@@ -25,7 +25,7 @@
 #define error_return(ERRVALUE) do { *error = (ERRVALUE); goto on_error; } while(0)
 #define error_exit_son() goto on_error_son\
 
-static const char *builtins_list[] = { "cd", "type", "exit" };
+static const char *builtins_list[] = { "cd", "type", "exit", "welcome" };
 #define ARR_LEN(ARR) (sizeof((ARR))/sizeof(*(ARR)))
 
 typedef void (*handler_t)(int);
@@ -210,8 +210,13 @@ static bool execute_builtins(struct Shell *shell, struct NodeBasicCommand *comma
     }
     assert(command);
     assert(command->name);
-    static_assert(ARR_LEN(builtins_list) == 3);
+    static_assert(ARR_LEN(builtins_list) == 4);
     if (!strcmp(command->name, "exit")) exit(0);
+    if (!strcmp(command->name, "welcome")) {
+        repl_colorful_welcome();
+        shell->last_exit_code = 0;
+        return true;
+    }
     if (!strcmp(command->name, "type")) {
         int return_value = 0;
         char **arg = &command->args[1];
