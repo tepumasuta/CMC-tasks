@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-// Non-expandable pointer reliable arena
+// Non-expandable pointer-reliable arena
 struct ArenaStatic {
     void *memory;
     size_t cap, at;
@@ -13,7 +13,7 @@ struct ArenaStatic {
 
 // Look-up index into arena relative to its base
 typedef ptrdiff_t ArenaOffset;
-// Expandable pointer unreliable arena
+// Expandable pointer-unreliable arena
 struct ArenaDynamic {
     void *memory;
     size_t cap, at;
