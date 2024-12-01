@@ -24,5 +24,5 @@ target_link_libraries(radsh m)
 
 foreach(target IN ITEMS radshlib radsh)
     target_compile_features(${target} PRIVATE c_std_17)
-    target_compile_options(${target} PRIVATE $<$<CONFIG:Debug>:-g3;-ggdb;-O0>)
+    target_compile_options(${target} PRIVATE $<$<CONFIG:Debug>:-g3;-ggdb;-O0;-Wswitch>)
 endforeach()
