@@ -25,7 +25,7 @@
 #define error_return(ERRVALUE) do { *error = (ERRVALUE); goto on_error; } while(0)
 #define error_exit_son() goto on_error_son\
 
-static const char *builtins_list[] = { "cd", "type", "help", "exit" };
+static const char *builtins_list[] = { "cd", "type", "exit" };
 #define ARR_LEN(ARR) (sizeof((ARR))/sizeof(*(ARR)))
 
 typedef void (*handler_t)(int);
@@ -204,14 +204,13 @@ static void normalize_path(char *path) {
 }
 
 static bool execute_builtins(struct Shell *shell, struct NodeBasicCommand *command, enum ShellError *error) {
-    /* TODO: help */
     struct REPLSettings settings = { .colorized = true };
     if (shell->main) {
         settings.colorized = false;
     }
     assert(command);
     assert(command->name);
-    assert(ARR_LEN(builtins_list) == 4);
+    static_assert(ARR_LEN(builtins_list) == 3);
     if (!strcmp(command->name, "exit")) exit(0);
     if (!strcmp(command->name, "type")) {
         int return_value = 0;
@@ -270,7 +269,6 @@ static bool execute_builtins(struct Shell *shell, struct NodeBasicCommand *comma
         shell->last_exit_code = 0;
         return true;
     }
-    if (!strcmp(command->name, "help")) assert(0 && "TODO: help");
 on_error:
     shell->last_exit_code = 1;
     return false;
