@@ -3,6 +3,8 @@
 
 #include <assert.h>
 #include <string.h>
+#include <glob.h>
+#include <stdlib.h>
 
 const string_view_t spacing_symbols = SV_FROM_CSTR(" \t");
 static const string_view_t disallowed_name_symbols = SV_FROM_CSTR(" \t;()|&<>");
@@ -55,12 +57,15 @@ static bool try_lex_operation(string_view_t *command, struct Token *into) {
 
     return false;
 }
-static bool try_lex_symbol(string_view_t *command, struct Token *into, enum LexerError *error) {
+
+static bool try_lex_symbol(string_view_t *command, struct Token *into, bool *opaque, enum LexerError *error) {
     assert(command);
     assert(into);
+    assert(opaque);
     string_view_t view = *command;
 
     if (sv_starts_with(view, SV_FROM_CSTR("\""))) {
+        *opaque = true;
         sv_chop(&view);
         string_view_t next_quot = sv_find_symbol(view, '"');
         if (!next_quot.start) {
@@ -75,6 +80,7 @@ static bool try_lex_symbol(string_view_t *command, struct Token *into, enum Lexe
     } else {
         assert(!sv_starts_with(view, SV_FROM_CSTR(" ")));
         assert(!sv_starts_with(view, SV_FROM_CSTR("\t")));
+        *opaque = false;
         string_view_t left = sv_find_symbol_any(view, disallowed_name_symbols);
         if (!left.start) {
             *into = (struct Token){ .type = TOKEN_TYPE_SYMBOL, .as_symbol = (struct TokenSymbol){ .symbol = view } };
@@ -89,14 +95,14 @@ static bool try_lex_symbol(string_view_t *command, struct Token *into, enum Lexe
 }
 
 
-static bool try_lex_token(string_view_t *command, struct Token *into, enum LexerError *error) {
+static bool try_lex_token(string_view_t *command, struct Token *into, bool *opaque, enum LexerError *error) {
     assert(command);
     assert(into);
     if (!command->length) return false;
     static_assert(TOKEN_TYPE_SIZE == 3);
     if (try_lex_syntax(command, into)
         || try_lex_operation(command, into)
-        || try_lex_symbol(command, into, error))
+        || try_lex_symbol(command, into, opaque, error))
         return true;
     return false;
 }
@@ -109,36 +115,116 @@ enum LexerError lexer_lex(string_view_t command, struct ArenaStatic **symtable,
     size_t tokens_at = token_allocator->at;
     enum LexerError error = LEXER_ERROR_NONE;
     struct Token current;
-    struct ArenaStatic *symtable_local = arena_static_try_create(command.length * 2);
+    struct ArenaDynamic *symtable_local = arena_dynamic_try_create(command.length * 2);
     if (!symtable_local) return LEXER_ERROR_FAILED_TO_ALLOC;
+    // struct ArenaStatic *symtable_local = arena_static_try_create(command.length * 2);
     sv_trim_any(&command, spacing_symbols);
+    glob_t globbuf;
+    bool glob_used = false;
     size_t total_tokens = 0;
-    while (try_lex_token(&command, &current, &error)) {
+    bool opaque;
+    while (try_lex_token(&command, &current, &opaque, &error)) {
         if (error != LEXER_ERROR_NONE) {
             assert(error != LEXER_ERROR_FAILED_TO_ALLOC);
-            *symtable = symtable_local;
-            *lexed_tokens = (token_view_t){ .start = (void *)((char *)token_allocator->memory + tokens_at), .length = total_tokens };
+            arena_dynamic_destroy(&symtable_local);
+            if (glob_used) globfree(&globbuf);
             return error;
         }
-        total_tokens++;
         if (current.type == TOKEN_TYPE_SYMBOL) {
-            char *symtable_local_address = arena_static_alloc(symtable_local, current.as_symbol.symbol.length + 1);
-            memcpy(symtable_local_address,
-                   current.as_symbol.symbol.start,
-                   current.as_symbol.symbol.length);
-            symtable_local_address[current.as_symbol.symbol.length] = '\0';
-            current.as_symbol.symbol.start = symtable_local_address;
+            if (!opaque) {
+                char *string = malloc(current.as_symbol.symbol.length + 1);
+                if (!string) {
+                    arena_dynamic_destroy(&symtable_local);
+                    if (glob_used) globfree(&globbuf);
+                    return LEXER_ERROR_FAILED_TO_ALLOC;
+                }
+                glob_used = true;
+                memcpy(string, current.as_symbol.symbol.start, current.as_symbol.symbol.length);
+                string[current.as_symbol.symbol.length] = '\0';
+                glob(string, GLOB_NOMAGIC | GLOB_TILDE, NULL, &globbuf);
+                if (!globbuf.gl_pathc) {
+                    free(string);
+                    total_tokens++;
+                    char *symtable_local_address = (char *)arena_dynamic_alloc(symtable_local, current.as_symbol.symbol.length + 1);
+                    memcpy(arena_dynamic_get_memory(symtable_local, (ArenaOffset)symtable_local_address),
+                        current.as_symbol.symbol.start,
+                        current.as_symbol.symbol.length);
+                    ((char *)arena_dynamic_get_memory(symtable_local, (ArenaOffset)symtable_local_address))[current.as_symbol.symbol.length] = '\0';
+                    current.as_symbol.symbol.start = symtable_local_address;
+                    ArenaOffset offset;
+                    if (!arena_dynamic_try_alloc(token_allocator, sizeof(current), &offset)) {
+                        arena_dynamic_destroy(&symtable_local);
+                        if (glob_used) globfree(&globbuf);
+                        return LEXER_ERROR_FAILED_TO_ALLOC;
+                    }
+                    *(struct Token *)arena_dynamic_get_memory(token_allocator, offset) = current;
+                    goto next_iteration;
+                }
+                for (int i = 0; i < globbuf.gl_pathc; i++) {
+                    total_tokens++;
+                    char *symtable_local_address = (char *)arena_dynamic_alloc(symtable_local, strlen(globbuf.gl_pathv[i]) + 1);
+                    memcpy(arena_dynamic_get_memory(symtable_local, (ArenaOffset)symtable_local_address),
+                        globbuf.gl_pathv[i],
+                        strlen(globbuf.gl_pathv[i]) + 1);
+                    current.as_symbol.symbol.start = symtable_local_address;
+                    current.as_symbol.symbol.length = strlen(globbuf.gl_pathv[i]);
+                    ArenaOffset offset;
+                    if (!arena_dynamic_try_alloc(token_allocator, sizeof(current), &offset)) {
+                        arena_dynamic_destroy(&symtable_local);
+                        if (glob_used) globfree(&globbuf);
+                        free(string);
+                        return LEXER_ERROR_FAILED_TO_ALLOC;
+                    }
+                    *(struct Token *)arena_dynamic_get_memory(token_allocator, offset) = current;
+                }
+                free(string);
+            } else {
+                total_tokens++;
+                char *symtable_local_address = (char *)arena_dynamic_alloc(symtable_local, current.as_symbol.symbol.length + 1);
+                memcpy(arena_dynamic_get_memory(symtable_local, (ArenaOffset)symtable_local_address),
+                    current.as_symbol.symbol.start,
+                    current.as_symbol.symbol.length);
+                ((char *)arena_dynamic_get_memory(symtable_local, (ArenaOffset)symtable_local_address))[current.as_symbol.symbol.length] = '\0';
+                current.as_symbol.symbol.start = symtable_local_address;
+                ArenaOffset offset;
+                if (!arena_dynamic_try_alloc(token_allocator, sizeof(current), &offset)) {
+                    arena_dynamic_destroy(&symtable_local);
+                    if (glob_used) globfree(&globbuf);
+                    return LEXER_ERROR_FAILED_TO_ALLOC;
+                }
+                *(struct Token *)arena_dynamic_get_memory(token_allocator, offset) = current;
+            }
+        } else {
+            total_tokens++;
+            ArenaOffset offset;
+            if (!arena_dynamic_try_alloc(token_allocator, sizeof(current), &offset)) {
+                arena_dynamic_destroy(&symtable_local);
+                if (glob_used) globfree(&globbuf);
+                return LEXER_ERROR_FAILED_TO_ALLOC;
+            }
+            *(struct Token *)arena_dynamic_get_memory(token_allocator, offset) = current;
         }
-        ArenaOffset offset;
-        if (!arena_dynamic_try_alloc(token_allocator, sizeof(current), &offset)) {
-            arena_static_destroy(&symtable_local);
-            return LEXER_ERROR_FAILED_TO_ALLOC;
-        }
-        *(struct Token *)arena_dynamic_get_memory(token_allocator, offset) = current;
+next_iteration:
         sv_trim_any(&command, spacing_symbols);
     }
     assert(command.length == 0);
-    *symtable = symtable_local;
+    if (glob_used) globfree(&globbuf);
+    struct ArenaStatic *static_symtable = arena_static_try_create(symtable_local->at);
+    if (!static_symtable){
+        arena_dynamic_destroy(&symtable_local);
+        return LEXER_ERROR_FAILED_TO_ALLOC;
+    }
+    memcpy(static_symtable->memory, symtable_local->memory, symtable_local->at);
+    arena_dynamic_destroy(&symtable_local);
+    for (int i = 0; i < total_tokens; i++) {
+        if (((struct Token*)((char *)token_allocator->memory + tokens_at))[i].type == TOKEN_TYPE_SYMBOL) {
+            ((struct Token*)((char *)token_allocator->memory + tokens_at))[i].as_symbol.symbol.start =
+                (char *)static_symtable->memory + (ArenaOffset)((struct Token*)((char *)token_allocator->memory + tokens_at))[i].as_symbol.symbol.start;
+        }
+    }
+    static_symtable->at = static_symtable->cap;
+    *symtable = static_symtable;
     *lexed_tokens = (token_view_t){ .start = (void *)((char *)token_allocator->memory + tokens_at), .length = total_tokens };
+    if (glob_used) globfree(&globbuf);
     return LEXER_ERROR_NONE;
 }

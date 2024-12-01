@@ -1,4 +1,5 @@
-/* TODO: Argument * expansion */
+/* TODO: correct path display */
+/* TODO: Memory reusage between commands for arenas */
 /* TODO: fg, bg */
 
 #include <stdlib.h>
@@ -15,7 +16,7 @@
 #include <errno.h>
 
 #define ERROR_PRINT_SKIP(MSG) do {\
-    repl_print_error(settings, MSG);\
+    repl_print_error(settings, (MSG));\
     shell->last_exit_code = 1;\
     goto next_iteration;\
 } while (0)
@@ -92,6 +93,7 @@ int main(void) {
             if (sigtstp_signal) { printf("^Z"); sigtstp_signal = false; }
             goto next_iteration;
         }
+        if (string[0] == '\0' || string[0] == '\n') goto next_iteration;
         arena_dynamic_reset(token_allocator);
         string_view_t lexer_view = { .start=string, .length=arena->at };
         if (sv_ends_with(lexer_view, SV_FROM_CSTR("\n"))) sv_chop_end(&lexer_view);
@@ -137,6 +139,9 @@ int main(void) {
         case SHELL_ERROR_FAILED_TO_CLOSE: ERROR_PRINT_SKIP("Shell error, failed to close file descriptor");
         case SHELL_ERROR_FAILED_TO_FORK: ERROR_PRINT_SKIP("Shell error, failed to give birth (fork)");
         case SHELL_ERROR_LOGIN_CAP: assert(0 && "Unreachable");
+        case SHELL_ERROR_CD_TOO_LONG_NAME: ERROR_PRINT_SKIP("Cd error, too long path name");
+        case SHELL_ERROR_CD_TOO_MANY_ARGUMENTS: ERROR_PRINT_SKIP("Cd error, too many arguments");
+        case SHELL_ERROR_CD_TOO_FEW_ARGUMENTS: ERROR_PRINT_SKIP("Cd error, too few arguments (cd to home by default not supported)");
         }
 next_iteration:
         arena_static_try_destroy(&symtable);

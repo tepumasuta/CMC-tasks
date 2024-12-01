@@ -406,7 +406,7 @@ enum ParserError parser_parse(token_view_t tokens, struct AST *parsed_ast,
     size_t above_buf = 0;
     for (size_t i = 0; i < tokens.length; i++)
         if (tokens.start[i].type == TOKEN_TYPE_SYMBOL)
-            above_buf += sizeof(char *);
+            above_buf += sizeof(char *) * 2;
     above_buf *= 3;
     struct ArenaStatic *allocator = arena_static_create(above_buf + symtable->at);
     size_t count;
