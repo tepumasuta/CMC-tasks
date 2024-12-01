@@ -156,7 +156,7 @@ static void normalize_path(char *path) {
         path[wi++] = path[i++];
     }
     length = wi ? wi : 1;
-    if (wi && path[wi - 1] == '/' && length > 1) { path[wi - 1] = '\0'; }
+    if (wi && path[wi - 1] == '/' && length > 1) { path[wi - 1] = '\0'; length--; }
     else { path[wi] = '\0'; }
     
     bool repeat = true;

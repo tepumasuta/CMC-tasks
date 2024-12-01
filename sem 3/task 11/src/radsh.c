@@ -1,4 +1,3 @@
-/* TODO: correct path display */
 /* TODO: Memory reusage between commands for arenas */
 /* TODO: fg, bg */
 
