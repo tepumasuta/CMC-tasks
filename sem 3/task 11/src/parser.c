@@ -128,8 +128,8 @@ static struct NodeBasicCommand *try_parse_basic_command(
     assert(chop_count);
     if (!tokens.length
         || tokens.start->type != TOKEN_TYPE_SYMBOL
-        && tokens.start->type != TOKEN_TYPE_OPERATOR
-        && !token_is_redirection(tokens.start->as_operator))
+        && !(tokens.start->type == TOKEN_TYPE_OPERATOR
+        && token_is_redirection(tokens.start->as_operator)))
     {
         return NULL;
     }
