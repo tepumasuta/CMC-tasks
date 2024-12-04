@@ -1,0 +1,48 @@
+{
+    struct Arena *arena = arena_create(1024);
+    printf("%p, %zu, %zu, %d\n", arena->memory, arena->at, arena->cap, arena->alloced);
+    arena_destroy(&arena);
+    printf("%p\n", arena);
+}
+{
+    struct Arena arena;
+    arena_init(&arena, 1024);
+    printf("%p, %zu, %zu, %d\n", arena.memory, arena.at, arena.cap, arena.alloced);
+    arena_deinit(&arena);
+}
+{
+    struct Arena arena;
+    arena_init(&arena, 1024);
+    int (*arr)[10] = arena_alloc(&arena, sizeof(*arr));
+    for (size_t i = 0; i < 10; i++)
+        (*arr)[i] = 69;
+    char *a = arena_alloc(&arena, sizeof(a));
+    *a = 'h';
+    size_t *gib = arena_alloc(&arena, sizeof(*gib));
+    *gib = arena.cap;
+    for (size_t i = 0; i < 10; i++)
+        printf("%d ", (*arr)[i]);
+    printf("\n%c\n%zu\n", *a, *gib);
+    size_t *big_arr = arena_try_alloc(&arena, sizeof(*big_arr) * 1000000);
+    printf("%p\n", big_arr);
+    arena_deinit(&arena);
+    arena_init(&arena, sizeof(*big_arr) * 1000000 * 4 + 1024);
+    size_t *big_arr2 = arena_alloc(&arena, sizeof(*big_arr) * 1000000 * 4);
+    printf("%zu\n", arena.cap);
+    arena_reset(&arena);
+    big_arr = arena_alloc(&arena, sizeof(*big_arr) * 1000000);
+    printf("%ld\n", (char*)big_arr - (char*)arena.memory);
+    arena_deinit(&arena);        
+}
+return 69;
+
+
+SV_FROM_CSTR("yes")
+SV_FROM_CSTR("(echo \"Hello $PATH\" && nice cock bro); hello")
+SV_FROM_CSTR("<a echo poo poo poo | cat | yes >b")
+SV_FROM_CSTR("abc|fgg|hell<g>h")
+SV_FROM_CSTR("<fin cat | wc >lol | wc >>fout")
+SV_FROM_CSTR("<fin cat | wc | wc >>fout")
+SV_FROM_CSTR("ps; ls; (cd "task 11"; ls; ps) && ls && ps")
+SV_FROM_CSTR("date; (ls -l | cat -n)>f & pwd")
+date; (ls -l | cat -n)>f ; pwd
