@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Text;
 
 struct DataItemF(float x, float y, Vector2 v)
 {
@@ -6,9 +7,7 @@ struct DataItemF(float x, float y, Vector2 v)
     public Vector2 Data = v;
 
     public override readonly string ToString()
-    {
-        return $"DataItemF {{x={X},y={Y},data={Data}}}";
-    }
+        => $"DataItemF {{x={X},y={Y},data={Data}}}";
 }
 
 class V1DataArray
@@ -30,16 +29,6 @@ class V1DataArray
             ));
     }
 
-    public override string ToString()
-    {
-        return $"V1DataArray {{Key={Key},Xgrid={Xgrid},Ygrid={Ygrid}}}";
-    }
-
-    public string ToLongString()
-    {
-        return $"V1DataArray {{Key={Key},Xgrid={Xgrid},Ygrid={Ygrid},data=[{string.Join(',', _packedData.Select(x => string.Format("{0:0.00}", x)))}]}}";
-    }
-
     public V1DataArray(string key, (int, float) xGrid, (int, float) yGrid)
     {
         Key = key;
@@ -55,6 +44,13 @@ class V1DataArray
         ];
         // Мог бы = new и цикл, но collection expression со spread читаемей
     }
+
+    public override string ToString() =>
+        $"V1DataArray {{Key={Key},Xgrid={Xgrid},Ygrid={Ygrid}}}";
+
+    public string ToLongString() =>
+        $"V1DataArray {{Key={Key},Xgrid={Xgrid},Ygrid={Ygrid},"
+        + $"data=[{string.Join(',', _packedData.Select(x => string.Format("{0:0.00}", x)))}]}}";
 
     public static explicit operator V2RDataArray(V1DataArray arr)
     {
@@ -121,22 +117,22 @@ class V2RDataArray
 
     public string ToLongString()
     {
-        string prettyArray = "";
+        StringBuilder prettyArray = new();
         for (int i = 0; i < _packedData.GetLength(0); i++)
         {
-            prettyArray += '[';
+            prettyArray.Append('[');
             for (int j = 0; j < _packedData.GetLength(1); j++)
             {
-                prettyArray += string.Format("{0:0.00},", _packedData[i, j]);
+                prettyArray.AppendFormat("{0:0.00},", _packedData[i, j]);
             }
-            prettyArray += "],";
+            prettyArray.Append("],");
         }
 
-        return $"V2RDataArray {{Key={Key},XYgrid={XYgrid},data=[{prettyArray}]}}";
+        return $"V2RDataArray {{Key={Key},XYgrid={XYgrid},data=[{prettyArray.ToString()}]}}";
     }
 }
 
-class Program
+internal class Program
 {
     public static void Main()
     {
