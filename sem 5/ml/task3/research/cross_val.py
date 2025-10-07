@@ -69,5 +69,5 @@ def knn_cv_score(X: np.ndarray, y: np.ndarray, parameters: dict[str, list],
                         knn.fit(X_train, y_train)
                         key = (normalizer_name, n_neighbors, metric, weight)
                         stat[key].append(score_function(y_test, knn.predict(X_test)))
-    result = {key: sum(value) / len(value) for key, value in stat.items()}
+    result = {key: np.mean(value) for key, value in stat.items()}
     return result
