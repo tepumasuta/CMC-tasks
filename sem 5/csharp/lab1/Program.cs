@@ -23,9 +23,9 @@ class V1DataArray
     {
         get => x >= Xgrid.Item1 || y >= Ygrid.Item1 || x < 0 || y < 0
             ? null
-            : new DataItemF(x, y, new (
-                _packedData[2 * x + 2 * y * Ygrid.Item1],
-                _packedData[2 * x + 2 * y * Ygrid.Item1 + 1]
+            : new DataItemF(x * Xgrid.Item2, y * Ygrid.Item2, new (
+                _packedData[2 * x + 2 * y * Xgrid.Item1],
+                _packedData[2 * x + 2 * y * Xgrid.Item1 + 1]
             ));
     }
 
@@ -80,19 +80,18 @@ class V2RDataArray
     {
         get {
             var (idx, max) = _packedData.Cast<double>().Index().MaxBy(x => x.Item);
-            idx /= 2;
-            return (max, idx % _packedData.GetLength(1), idx / _packedData.GetLength(1));
+            return (max, idx % _packedData.GetLength(1), idx / _packedData.GetLength(1) / 2);
         }
     }
     public (double, double) this[int x, int y]
     {
         get => x >= XYgrid.Item1 || y >= XYgrid.Item3 || x < 0 || y < 0
             ? (double.NaN, double.NaN)
-            : (_packedData[x, y], _packedData[x + 1, y]); // Ибо а как хранить по 2 double в одном?
+            : (_packedData[2 * x, y], _packedData[2 * x + 1, y]); // Ибо а как хранить по 2 double в одном?
         set
         {
             if (x < XYgrid.Item1 && y < XYgrid.Item3 && x >= 0 && y >= 0)
-                (_packedData[x, y], _packedData[x + 1, y]) = value;
+                (_packedData[2 * x, y], _packedData[2 * x + 1, y]) = value;
         }
     }
 
@@ -107,7 +106,6 @@ class V2RDataArray
         foreach (var i in Enumerable.Range(0, _packedData.GetLength(0)))
             foreach (var j in Enumerable.Range(0, _packedData.GetLength(1)))
                 _packedData[i, j] = randNum.NextDouble() * (Max - Min) + Min;
-        // Мог бы = new и цикл, но collection expression со spread читаемей
     }
 
     public override string ToString()
@@ -118,17 +116,15 @@ class V2RDataArray
     public string ToLongString()
     {
         StringBuilder prettyArray = new();
-        for (int i = 0; i < _packedData.GetLength(0); i++)
+        for (int j = 0; j < _packedData.GetLength(1); j++)
         {
-            prettyArray.Append('[');
-            for (int j = 0; j < _packedData.GetLength(1); j++)
+            for (int i = 0; i * 2 < _packedData.GetLength(0); i++)
             {
-                prettyArray.AppendFormat("{0:0.00},", _packedData[i, j]);
+                prettyArray.AppendFormat("[{0:0.00},{1:0.00}],", _packedData[2 * i, j], _packedData[(2 * i) + 1, j]);
             }
-            prettyArray.Append("],");
         }
 
-        return $"V2RDataArray {{Key={Key},XYgrid={XYgrid},data=[{prettyArray.ToString()}]}}";
+        return $"V2RDataArray {{Key={Key},XYgrid={XYgrid},data=[{prettyArray}]}}";
     }
 }
 
