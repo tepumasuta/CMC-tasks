@@ -7,7 +7,12 @@ struct DataItemF(float x, float y, Vector2 v)
     public Vector2 Data = v;
 
     public override readonly string ToString()
-        => $"DataItemF {{x={X},y={Y},data={Data}}}";
+        => $"DataItemF {{ x={X}, y={Y}, data={Data} }}";
+}
+
+internal interface ILongStringifiable
+{
+    public string ToLongString();
 }
 
 static class Funcs
@@ -20,6 +25,11 @@ static class Funcs
 
     public static ((float X, float Y), DataItemF Data) KeyDataItemFPairAtIndex(int idx) =>
         new((-idx * idx, idx * idx), new DataItemF(-idx * idx, idx * idx, new(-idx, idx)));
+
+    public static float EuclidianDistance((float x, float y) p1, (float x, float y) p2)
+    {
+        return MathF.Sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
+    }
 };
 
 interface IDataInfo
@@ -30,7 +40,7 @@ interface IDataInfo
     DataItemF Nearest(float x, float y);
 }
 
-class V2RDataArray : IDataInfo, IEnumerable<DataItemF>
+class V2RDataArray : IDataInfo, IEnumerable<DataItemF>, ILongStringifiable
 {
     protected readonly Vector2[,] PackedData;
 
@@ -60,17 +70,11 @@ class V2RDataArray : IDataInfo, IEnumerable<DataItemF>
 
     public DataItemF Nearest(float x, float y)
     {
-        float x_mapped = x / Xgrid.step;
-        float y_mapped = y / Ygrid.step;
-        float x_fr = x_mapped - MathF.Truncate(x_mapped);
-        float y_fr = y_mapped - MathF.Truncate(y_mapped);
-        int x_delta = (int)MathF.Truncate(x_fr * 2);
-        int y_delta = (int)MathF.Truncate(y_fr * 2);
-        int x_idx = (int)Math.Truncate(x_mapped) + x_delta;
-        int y_idx = (int)Math.Truncate(y_mapped) + y_delta;
-        int x_clamped = Math.Clamp(x_idx, 0, Xgrid.size - 1);
-        int y_clamped = Math.Clamp(y_idx, 0, Ygrid.size - 1);
-        return new DataItemF(x_clamped * Xgrid.step, y_clamped * Ygrid.step, PackedData[x_clamped, y_clamped]);
+        int xIdx = Math.Clamp((int)MathF.Round(x / Xgrid.step), 0, Xgrid.size - 1);
+        int yIdx = Math.Clamp((int)MathF.Round(y / Ygrid.step), 0, Ygrid.size - 1);
+        float xCoord = xIdx * Xgrid.step;
+        float yCoord = yIdx * Ygrid.step;
+        return new DataItemF(xCoord, yCoord, PackedData[xIdx, yIdx]);
     }
 
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
@@ -87,29 +91,44 @@ class V2RDataArray : IDataInfo, IEnumerable<DataItemF>
         }
     }
 
-    public override string ToString() =>
-        $"V2DataArray {{Key={Key},Xgrid={Xgrid},Ygrid={Ygrid}}}";
-
     public string GridToString()
     {
-        var result = new StringBuilder("data=[");
+        var result = new StringBuilder("[");
         for (int i = 0; i < Xgrid.size; i++)
         {
             for (int j = 0; j < Ygrid.size; j++)
-                result.Append($"(idx=({i},{j}),coord=({i * Xgrid.step},{j * Ygrid.step}),vec={PackedData[i, j]}),");
+                result.Append($"(idx=({i}, {j}), coord=({i * Xgrid.step}, {j * Ygrid.step}), vec={PackedData[i, j]}), ");
         }
+        if (Ygrid.size > 0 && Xgrid.size > 0)
+            result.Length -= 2;
+
         result.Append(']');
         return result.ToString();
     }
 
+    private string GetBasicInfo()
+        => $"Key={Key}, Xgrid={Xgrid}, Ygrid={Ygrid}";
+
+    private string GetAdditionalInfo()
+        => $"data={GridToString()}";
+
+    public override string ToString() =>
+        $"V2DataArray {{ {GetBasicInfo()} }}";
+
     public virtual string ToLongString() =>
-        $"V2DataArray {{Key={Key},Xgrid={Xgrid},Ygrid={Ygrid},data={GridToString()}";
+        $"V2DataArray {{ {GetBasicInfo()}, {GetAdditionalInfo()} }}";
 }
 
-class V2RList : V2RDataArray, IDataInfo, IEnumerable<DataItemF>
+class V2RList(string key, (int, float) Xgrid, (int, float) Ygrid,
+               Func<float, float, Vector2> FR, int nList,
+               Func<int, DataItemF> FL) : V2RDataArray(key, Xgrid, Ygrid, FR), IDataInfo, IEnumerable<DataItemF>, ILongStringifiable
 {
-    private readonly List<DataItemF> _additional;
-    public new string Key { get; set; }
+    private readonly List<DataItemF> _additional = [
+        .. Enumerable
+        .Range(0, nList)
+        .Select(i => FL(i))
+    ];
+    public new string Key { get; set; } = key;
     public new int Count { get => _additional.Count + base.Count; }
     public new (float Min, float Max) MinMax
     {
@@ -122,10 +141,9 @@ class V2RList : V2RDataArray, IDataInfo, IEnumerable<DataItemF>
     {
         var minList = _additional.MinBy(d => Math.Sqrt((d.X - x) * (d.X - x) + (d.Y - y) * (d.Y - y)));
         var minGrid = base.Nearest(x, y);
-        return Math.Sqrt((minList.X - x) * (minList.X - x) + (minList.Y - y) * (minList.Y - y))
-               > Math.Sqrt((minGrid.X - x) * (minGrid.X - x) + (minGrid.Y - y) * (minGrid.Y - y))
-            ? minGrid
-            : minList;
+        return Funcs.EuclidianDistance((minList.X, minList.Y), (x, y)) > Funcs.EuclidianDistance((minGrid.X, minGrid.Y), (x, y))
+               ? minGrid
+               : minList;
     }
 
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
@@ -144,36 +162,28 @@ class V2RList : V2RDataArray, IDataInfo, IEnumerable<DataItemF>
             yield return d;
     }
 
-    public V2RList(string key, (int, float) Xgrid, (int, float) Ygrid,
-                   Func<float, float, Vector2> FR, int nList,
-                   Func<int, DataItemF> FL)
-        : base(key, Xgrid, Ygrid, FR)
-    {
-        Key = key;
-        _additional = [
-            .. Enumerable
-            .Range(0, nList)
-            .Select(i => FL(i))
-        ];
-    }
-
     public void Add(DataItemF item)
     {
         _additional.Add(item);
     }
 
+    private string GetBasicInfo()
+        => $"Key={Key}, Xgrid={Xgrid}, Ygrid={Ygrid}, Length={_additional.Count}";
+
+    private string GetAdditionalInfo()
+        => $"data={GridToString()}, additional=[{string.Join(", ", _additional)}]";
+
     public override string ToString() =>
-        $"V2RList {{Key={Key},Xgrid={Xgrid},Ygrid={Ygrid},Length={_additional.Count}}}";
+        $"V2RList {{ {GetBasicInfo()} }}";
 
     public override string ToLongString() =>
-        $"V2RList {{Key={Key},Xgrid={Xgrid},Ygrid={Ygrid},Length={_additional.Count}}}"
-        + $",data={GridToString()},additional=[{string.Join(',', _additional)}]}}";
+        $"V2RList {{ {GetBasicInfo()}, {GetAdditionalInfo()} }}";
 }
 
-class V2RDict : IDataInfo, IEnumerable<DataItemF>
+class V2RDict : IDataInfo, IEnumerable<DataItemF>, ILongStringifiable
 {
-    private V2RDataArray _grid;
-    private Dictionary<(float X, float Y), DataItemF> _additional;
+    private readonly V2RDataArray _grid;
+    private readonly Dictionary<(float X, float Y), DataItemF> _additional;
 
     public string Key { get; set; }
     public int Count { get => _additional.Count + _grid.Count; }
@@ -189,12 +199,11 @@ class V2RDict : IDataInfo, IEnumerable<DataItemF>
     }
     public DataItemF Nearest(float x, float y)
     {
-        var minList = _additional.MinBy(p => Math.Sqrt((p.Key.X - x) * (p.Key.X - x) + (p.Key.Y - y) * (p.Key.Y - y))).Value;
+        var minDict = _additional.MinBy(p => Funcs.EuclidianDistance((p.Key.X, p.Key.Y), (x, y))).Value;
         var minGrid = _grid.Nearest(x, y);
-        return Math.Sqrt((minList.X - x) * (minList.X - x) + (minList.Y - y) * (minList.Y - y))
-               > Math.Sqrt((minGrid.X - x) * (minGrid.X - x) + (minGrid.Y - y) * (minGrid.Y - y))
+        return Funcs.EuclidianDistance((minDict.X, minDict.Y), (x, y)) > Funcs.EuclidianDistance((minGrid.X, minGrid.Y), (x, y))
             ? minGrid
-            : minList;
+            : minDict;
     }
 
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
@@ -204,11 +213,8 @@ class V2RDict : IDataInfo, IEnumerable<DataItemF>
 
     public IEnumerator<DataItemF> GetEnumerator()
     {
-        var enumerator = _grid.GetEnumerator();
-        while (enumerator.MoveNext())
-        {
-            yield return enumerator.Current;
-        }
+        foreach (var item in _grid)
+            yield return item;
         foreach (var (_, d) in _additional)
             yield return d;
     }
@@ -232,51 +238,54 @@ class V2RDict : IDataInfo, IEnumerable<DataItemF>
         _additional.Add((item.X, item.Y), item);
     }
 
+    private string GetBasicInfo()
+        => $"Key={Key}, Xgrid={_grid.Xgrid}, Ygrid={_grid.Ygrid}, Length={_additional.Count}";
+
+    private string GetAdditionalInfo()
+        => $"data={_grid.GridToString()}, additional=[{string.Join(", ", _additional)}]";
+
     public override string ToString() =>
-        $"V2RDict {{Key={Key},Xgrid={_grid.Xgrid},Ygrid={_grid.Ygrid},Length={_additional.Count}}}";
+        $"V2RDict {{ {GetBasicInfo()} }}";
 
     public string ToLongString() =>
-        $"V2RDict {{Key={Key},Xgrid={_grid.Xgrid},Ygrid={_grid.Ygrid},Length={_additional.Count}}}"
-        + $",data={_grid.GridToString()},additional=[{string.Join(',', _additional)}]}}";
+        $"V2RDict {{ {GetBasicInfo()}, {GetAdditionalInfo()} }}";
 }
 
 internal class Program
 {
+    private static void PrintDataInfo<T>(T v2Object, (float x, float y) nearestInside, (float x, float y) nearestOutside)
+        where T : IDataInfo
+    {
+        Console.WriteLine($"Key: {v2Object.Key}\nCount: {v2Object.Count}\nMinMax: {v2Object.MinMax}"
+                          + $"\nNearest (inside {nearestInside}): {v2Object.Nearest(nearestInside.x, nearestInside.y)}"
+                          + $"\nNearest (outside {nearestOutside}): {v2Object.Nearest(nearestOutside.x, nearestOutside.y)}\n");        
+    }
+
+    private static void PrintObject<T>(string name, T v2Object, (float x, float y) nearestInside, (float x, float y) nearestOutside)
+        where T : IDataInfo, IEnumerable<DataItemF>, ILongStringifiable
+    {
+        Console.WriteLine($"{name}={v2Object.ToLongString()}");
+        foreach (var point in v2Object)
+            Console.WriteLine($"- Point: {point}");
+        PrintDataInfo(v2Object, nearestInside, nearestOutside);
+    }
+
     public static void Main()
     {
         // Fuck this bullshit
         Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.CreateSpecificCulture("en-US");
 
         var da = new V2RDataArray("Ohio", (3, .5f), (2, .3f), Funcs.RotatedVecAtPoint);
-        Console.WriteLine($"da={da.ToLongString()}");
-
-        foreach (var point in da)
-            Console.WriteLine($"Point: {point}");
-        Console.WriteLine($"Key: {da.Key}, Count: {da.Count}, MinMax: {da.MinMax}, Nearest (inside (0.5f, 0.5f)): {da.Nearest(0.5f, 0.5f)}, Nearest (outside (-100.0f, 100.0f)): {da.Nearest(-100.0f, 100.0f)}");
-
-        Console.WriteLine();
+        PrintObject("da", da, (0.5f, 0.5f), (-100.0f, 100.0f));
 
         var dl = new V2RList("Ohio", (3, .5f), (2, .3f), Funcs.RotatedVecAtPoint, 5, Funcs.DataItemFAtIndex);
-        Console.WriteLine($"dl={dl.ToLongString()}");
-
-        foreach (var point in dl)
-            Console.WriteLine($"Point: {point}");
-        Console.WriteLine($"Key: {dl.Key}, Count: {dl.Count}, MinMax: {dl.MinMax}, Nearest (inside (0.5f, 0.5f)): {dl.Nearest(0.5f, 0.5f)}, Nearest (outside (100.0f, -100.0f)): {dl.Nearest(100.0f, -100.0f)}");
-
-        Console.WriteLine();
-
+        PrintObject("dl", dl, (0.5f, 0.5f), (100.0f, -100.0f));
+        
         var dd = new V2RDict("Ohio", (3, .5f), (2, .3f), Funcs.RotatedVecAtPoint, 10, Funcs.KeyDataItemFPairAtIndex);
-        Console.WriteLine($"dd={dd.ToLongString()}");
-
-        foreach (var point in dd)
-            Console.WriteLine($"Point: {point}");
-        Console.WriteLine($"Key: {dd.Key}, Count: {dd.Count}, MinMax: {dd.MinMax}, Nearest (inside (0.5f, 0.5f)): {dd.Nearest(0.5f, 0.5f)}, Nearest (outside (-50.0f, 50.0f)): {dd.Nearest(-50.0f, 50.0f)}");
-
-        Console.WriteLine();
-
+        PrintObject("dd", dd, (0.5f, 0.5f), (-50.0f, 50.0f));
+        
         var infos = new IDataInfo[3] { da, dl, dd };
-
         foreach (var info in infos)
-            Console.WriteLine($"Key: {info.Key}, Count: {info.Count}, MinMax: {info.MinMax}, Nearest (inside (0.5f, 0.5f)): {info.Nearest(0.5f, 0.5f)}, Nearest (outside (-50.0f, 50.0f)): {info.Nearest(-50.0f, 50.0f)}");
+            PrintDataInfo(info, (0.5f, 0.5f), (-50.0f, 50.0f));
     }
 }
