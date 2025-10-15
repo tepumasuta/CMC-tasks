@@ -19,7 +19,7 @@ def kfold_split(num_objects: int,
     contains all indexes without i-th fold while the 2nd
     one contains i-th fold
     """
-    indicies = np.arange(num_objects, dtype=int)
+    indicies = np.arange(num_objects, dtype=np.int)
     s = num_objects // num_folds
     return (
         [(np.hstack([indicies[:i * s], indicies[(i + 1) * s:]]), indicies[i * s:(i + 1) * s])
