@@ -26,7 +26,7 @@ static class Funcs
     public static ((float X, float Y), DataItemF Data) KeyDataItemFPairAtIndex(int idx) =>
         new((-idx * idx, idx * idx), new DataItemF(-idx * idx, idx * idx, new(-idx, idx)));
 
-    public static float EuclidianDistance((float x, float y) p1, (float x, float y) p2)
+    public static float Distance((float x, float y) p1, (float x, float y) p2)
     {
         return MathF.Sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
     }
@@ -50,9 +50,9 @@ class V2RDataArray : IDataInfo, IEnumerable<DataItemF>, ILongStringifiable
     public int Count { get => Xgrid.size * Ygrid.size; }
     public (float Min, float Max) MinMax
     {
-        get => (
-            PackedData.Cast<Vector2>().Min(v => v.X),
-            PackedData.Cast<Vector2>().Max(v => v.X)
+        get => PackedData.Cast<Vector2>().Aggregate(
+            (min: float.MaxValue, max: float.MinValue),
+            (acc, v) => (MathF.Min(acc.min, v.X), MathF.Max(acc.max, v.X))
         );
     }
 
@@ -82,7 +82,7 @@ class V2RDataArray : IDataInfo, IEnumerable<DataItemF>, ILongStringifiable
         return GetEnumerator();
     }
 
-    public IEnumerator<DataItemF> GetEnumerator()
+    public virtual IEnumerator<DataItemF> GetEnumerator()
     {
         for (int i = 0; i < Xgrid.size; i++)
         {
@@ -139,9 +139,9 @@ class V2RList(string key, (int, float) Xgrid, (int, float) Ygrid,
     }
     public new DataItemF Nearest(float x, float y)
     {
-        var minList = _additional.MinBy(d => Math.Sqrt((d.X - x) * (d.X - x) + (d.Y - y) * (d.Y - y)));
+        var minList = _additional.MinBy(d => Funcs.Distance((d.X, d.Y), (x, y)));
         var minGrid = base.Nearest(x, y);
-        return Funcs.EuclidianDistance((minList.X, minList.Y), (x, y)) > Funcs.EuclidianDistance((minGrid.X, minGrid.Y), (x, y))
+        return Funcs.Distance((minList.X, minList.Y), (x, y)) > Funcs.Distance((minGrid.X, minGrid.Y), (x, y))
                ? minGrid
                : minList;
     }
@@ -151,7 +151,7 @@ class V2RList(string key, (int, float) Xgrid, (int, float) Ygrid,
         return GetEnumerator();
     }
 
-    public new IEnumerator<DataItemF> GetEnumerator()
+    public override IEnumerator<DataItemF> GetEnumerator()
     {
         var enumerator = base.GetEnumerator();
         while (enumerator.MoveNext())
@@ -199,9 +199,11 @@ class V2RDict : IDataInfo, IEnumerable<DataItemF>, ILongStringifiable
     }
     public DataItemF Nearest(float x, float y)
     {
-        var minDict = _additional.MinBy(p => Funcs.EuclidianDistance((p.Key.X, p.Key.Y), (x, y))).Value;
         var minGrid = _grid.Nearest(x, y);
-        return Funcs.EuclidianDistance((minDict.X, minDict.Y), (x, y)) > Funcs.EuclidianDistance((minGrid.X, minGrid.Y), (x, y))
+        if (_additional.Count == 0)
+            return minGrid;
+        var minDict = _additional.MinBy(p => Funcs.Distance((p.Key.X, p.Key.Y), (x, y))).Value;
+        return Funcs.Distance((minDict.X, minDict.Y), (x, y)) > Funcs.Distance((minGrid.X, minGrid.Y), (x, y))
             ? minGrid
             : minDict;
     }
@@ -287,5 +289,9 @@ internal class Program
         var infos = new IDataInfo[3] { da, dl, dd };
         foreach (var info in infos)
             PrintDataInfo(info, (0.5f, 0.5f), (-50.0f, 50.0f));
+
+        V2RDataArray da2 = dl;
+        foreach (var point in da2)
+            Console.WriteLine(point);
     }
 }
