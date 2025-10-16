@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using System.Text;
+using System.Collections;
 
 struct DataItemF(float x, float y, Vector2 v)
 {
@@ -77,7 +78,7 @@ class V2RDataArray : IDataInfo, IEnumerable<DataItemF>, ILongStringifiable
         return new DataItemF(xCoord, yCoord, PackedData[xIdx, yIdx]);
     }
 
-    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    IEnumerator IEnumerable.GetEnumerator()
     {
         return GetEnumerator();
     }
@@ -146,7 +147,7 @@ class V2RList(string key, (int, float) Xgrid, (int, float) Ygrid,
                : minList;
     }
 
-    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    IEnumerator IEnumerable.GetEnumerator()
     {
         return GetEnumerator();
     }
@@ -208,7 +209,7 @@ class V2RDict : IDataInfo, IEnumerable<DataItemF>, ILongStringifiable
             : minDict;
     }
 
-    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    IEnumerator IEnumerable.GetEnumerator()
     {
         return GetEnumerator();
     }
@@ -223,7 +224,7 @@ class V2RDict : IDataInfo, IEnumerable<DataItemF>, ILongStringifiable
 
 
     public V2RDict(string key, (int, float) Xgrid, (int, float) Ygrid, Func<float, float, Vector2> FR,
-            int nDict, Func<int, ((float, float), DataItemF)> FD)
+        int nDict, Func<int, ((float, float), DataItemF)> FD)
     {
         Key = key;
         _grid = new V2RDataArray(key, Xgrid, Ygrid, FR);
@@ -263,7 +264,8 @@ internal class Program
                           + $"\nNearest (outside {nearestOutside}): {v2Object.Nearest(nearestOutside.x, nearestOutside.y)}\n");        
     }
 
-    private static void PrintObject<T>(string name, T v2Object, (float x, float y) nearestInside, (float x, float y) nearestOutside)
+    private static void PrintObject<T>(string name, T v2Object, (float x, float y) nearestInside,
+        (float x, float y) nearestOutside)
         where T : IDataInfo, IEnumerable<DataItemF>, ILongStringifiable
     {
         Console.WriteLine($"{name}={v2Object.ToLongString()}");
