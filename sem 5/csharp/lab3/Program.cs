@@ -76,10 +76,8 @@ class DataItemFT : INotifyPropertyChanged
         return false;
     }
 
-    public override string ToString()
-    {
-        return $"DataItemFT {{X = {X}, Y = {Y}, Data = {_data}, Measurement = {_measurement}}}";
-    }
+    public override string ToString() =>
+        $"DataItemFT(X={X}, Y={Y}, Data=({_data.X}, {_data.Y}), Measurement={_measurement:yyyy-MM-dd})";
 
     private void OnPropertyChanged(string field_name)
     {
@@ -130,7 +128,7 @@ class FCollection : ObservableCollection<DataItemFT>
     {
         try
         {
-            using FileStream fs = new FileStream(filename, FileMode.OpenOrCreate);
+            using FileStream fs = new(filename, FileMode.OpenOrCreate);
             using BinaryWriter writer = new(fs);
             writer.Write(Count);
             foreach (var dt in this)
@@ -186,7 +184,9 @@ class FCollection : ObservableCollection<DataItemFT>
     }
 
     public override string ToString() =>
-        $"FCollection {{items = [{string.Join(',', this)}]}}";
+        Count == 0 
+        ? "FCollection [<empty>]" 
+        : $"FCollection [\n{string.Join(",\n", this.Select((item, index) => $"    [{index}] {item}"))}\n]";
 
     private new void Clear()
     {
@@ -221,29 +221,42 @@ class Journal()
             Log.Add($"{args.PropertyName} = {args.Value}");
     }
     public override string ToString() =>
-        $"Journal = [{string.Join(",", Log)}]";
-}
+        Log.Count == 0 
+        ? "Journal [<empty>]" 
+        : $"Journal [\n{string.Join(",\n", Log.Select((entry, index) => $"    {index + 1}. {entry}"))}\n]";}
 
 internal class Program
 {
     public static void Main()
     {
+        Console.WriteLine("DATA ITEM SERIALIZATION TEST");
+        Console.WriteLine("=============================");
         DataItemFT item = new(69, 42, new(13, 7), DateTime.Now.AddYears(5));
         string item_str = item.ToSavedString();
-        Console.WriteLine(item_str);
-        DataItemFT deserealized_item = new();
-        Console.WriteLine(DataItemFT.FromSavedString(item_str, ref deserealized_item)
-                          ? "Successfully deserealized DataItemFT"
-                          : "Failed to deserealize DataItemFT");
-        Console.WriteLine(deserealized_item.ToString());
+        Console.WriteLine("Serialized: " + item_str);
+        
+        DataItemFT deserialized_item = new();
+        bool success = DataItemFT.FromSavedString(item_str, ref deserialized_item);
+        
+        Console.WriteLine(success ? "SUCCESS: DataItemFT deserialized" : "FAILED: DataItemFT deserialization");
+        Console.WriteLine("Deserialized: " + deserialized_item);
         Console.WriteLine();
 
-
+        // Test collection functionality
+        Console.WriteLine("COLLECTION AND JOURNAL TEST");
+        Console.WriteLine("===========================");
         FCollection collection = [];
         Journal journal = new();
+        
         collection.CollectionChanged += journal.LogAction;
         collection.ItemChanged += journal.LogItemChange;
         
+        Console.WriteLine("Initial state:");
+        Console.WriteLine(collection);
+        Console.WriteLine(journal);
+        Console.WriteLine();
+
+        Console.WriteLine("Adding initial items...");
         collection.AddRange(
             new DataItemFT(1, 2, new Vector2(10, 20), new DateTime(2023, 1, 1)),
             new DataItemFT(5, 6, new Vector2(50, 60), new DateTime(2023, 3, 3)),
@@ -251,81 +264,123 @@ internal class Program
             new DataItemFT(5, 6, new Vector2(50, 60), new DateTime(2025, 3, 3))
         );
 
+        Console.WriteLine("After adding items:");
         Console.WriteLine(collection);
         Console.WriteLine(journal);
+        Console.WriteLine();
 
+        Console.WriteLine("MODIFYING COLLECTION...");
         collection.Remove(collection[2]);
         collection[0] = new DataItemFT(7, 8, new Vector2(70, 80), new DateTime(2024, 4, 4));
         collection[2].Data = new Vector2(99, 88);
         collection[2].Measurement = new DateTime(2025, 5, 5);
 
+        Console.WriteLine("After modifications:");
         Console.WriteLine(collection);
         Console.WriteLine(journal);
         Console.WriteLine();
 
-
+        // Test save/load functionality
+        Console.WriteLine("FILE SAVE/LOAD TEST");
+        Console.WriteLine("===================");
         string filename = "test_collection.dat";
-        Console.WriteLine(collection.Save(filename)
-                          ? $"Successfully saved collection to file {filename}"
-                          : $"Failed to save collection to file {filename}");
+        bool saveSuccess = collection.Save(filename);
+        
+        Console.WriteLine(saveSuccess ? "SUCCESS: Collection saved to " + filename : "FAILED: Save to " + filename);
+                          
         FCollection restoredCollection = [];
-        Console.WriteLine(restoredCollection.Load(filename)
-                          ? $"Successfully loaded collection from file {filename}"
-                          : $"Failed to load collection from file {filename}");
+        bool loadSuccess = restoredCollection.Load(filename);
+        
+        Console.WriteLine(loadSuccess ? "SUCCESS: Collection loaded from " + filename : "FAILED: Load from " + filename);
+        Console.WriteLine("Restored collection:");
         Console.WriteLine(restoredCollection);
         Console.WriteLine();
 
+        // Add more items and test queries
+        Console.WriteLine("QUERY TESTS");
+        Console.WriteLine("===========");
+        Console.WriteLine("Adding more items to restored collection...");
         restoredCollection.AddRange(
             new DataItemFT(-1, 4, new Vector2(30, 40), new DateTime(2024, 2, 2)),
             new DataItemFT(0, 4, new Vector2(30, 40), new DateTime(2023, 2, 2))
         );
 
+        Console.WriteLine("Restored collection with new items:");
         Console.WriteLine(restoredCollection);
-
-        Console.WriteLine("Query: FindByTimeYear(2023) - find all items with measurement year 2023");
-        var yearQuery = restoredCollection.FindByTimeYear(2023);
-        Console.WriteLine(yearQuery.Any() 
-                          ? $"Result: {string.Join("; ", yearQuery)}" 
-                          : "Result: No items found");
-
-        Console.WriteLine("Query: OrderedCoords - get unique X coordinates in ascending order");
-        var coordsQuery = restoredCollection.OrderedCoords;
-        Console.WriteLine(coordsQuery != null 
-                          ? $"Result: {string.Join(", ", coordsQuery)}" 
-                          : "Result: No unique coordinates found");
-
         Console.WriteLine();
 
+        Console.WriteLine("QUERY 1: FindByTimeYear(2023)");
+        var yearQuery = restoredCollection.FindByTimeYear(2023);
+        
+        if (yearQuery.Any())
+        {
+            Console.WriteLine($"Found {yearQuery.Count()} items for year 2023:");
+            var queryResults = string.Join(",\n", yearQuery.Select(item => $"    {item}"));
+            Console.WriteLine($"[\n{queryResults}\n]");
+        }
+        else
+        {
+            Console.WriteLine("No items found for year 2023");
+        }
+        Console.WriteLine();
 
+        Console.WriteLine("QUERY 2: OrderedCoords");
+        var coordsQuery = restoredCollection.OrderedCoords;
+        
+        if (coordsQuery != null)
+        {
+            Console.WriteLine("Unique X coordinates in ascending order:");
+            var coordsList = string.Join(", ", coordsQuery);
+            Console.WriteLine($"[ {coordsList} ]");
+        }
+        else
+        {
+            Console.WriteLine("No unique coordinates found");
+        }
+        Console.WriteLine();
+
+        // Test error handling
+        Console.WriteLine("ERROR HANDLING TESTS");
+        Console.WriteLine("====================");
+        
+        Console.WriteLine("Testing invalid string parsing...");
         DataItemFT error_item = new();
         string invalid_string = "Invalid;format;string";
-        Console.WriteLine(DataItemFT.FromSavedString(invalid_string, ref error_item)
-                          ? "Unexpectedly succeeded"
-                          : "Expected failure - invalid format");
+        bool parseSuccess = DataItemFT.FromSavedString(invalid_string, ref error_item);
+        Console.WriteLine(parseSuccess ? "UNEXPECTED: Should have failed" : "EXPECTED: Failed to parse invalid format");
         Console.WriteLine();
 
-        
+        Console.WriteLine("Testing file not found...");
         FCollection emptyCollection = [];
-        Console.WriteLine(emptyCollection.Load("non_existent_file.dat")
-                          ? "Unexpectedly loaded"
-                          : "Expected failure - file not found");
+        bool loadFail = emptyCollection.Load("non_existent_file.dat");
+        Console.WriteLine(loadFail ? "UNEXPECTED: Should have failed" : "EXPECTED: File not found");
         Console.WriteLine();
 
-
+        // Test empty query results
+        Console.WriteLine("EDGE CASE TESTS");
+        Console.WriteLine("===============");
+        
         FCollection testCollection1 = [];
         testCollection1.AddRange(
             new DataItemFT(1, 2, new Vector2(10, 20), new DateTime(2020, 1, 1)),
             new DataItemFT(3, 4, new Vector2(30, 40), new DateTime(2021, 2, 2))
         );
         
-        Console.WriteLine("Query: FindByTimeYear(2023) on collection with years 2020, 2021");
+        Console.WriteLine("Testing FindByTimeYear(2023) on collection with years 2020-2021:");
         var emptyYearQuery = testCollection1.FindByTimeYear(2023);
-        Console.WriteLine(emptyYearQuery.Any() 
-                          ? $"Result: {string.Join("; ", emptyYearQuery)}" 
-                          : "Result: No items found for year 2023");
+        
+        if (emptyYearQuery.Any())
+        {
+            var results = string.Join(",\n", emptyYearQuery.Select(item => $"    {item}"));
+            Console.WriteLine($"[\n{results}\n]");
+        }
+        else
+        {
+            Console.WriteLine("[<no results>]");
+        }
         Console.WriteLine();
 
-
+        // Test duplicate coordinates scenario
         FCollection testCollection2 = [];
         testCollection2.AddRange(
             new DataItemFT(1, 1, new Vector2(1, 1), DateTime.Now),
@@ -334,10 +389,19 @@ internal class Program
             new DataItemFT(2, 4, new Vector2(4, 4), DateTime.Now)
         );
         
-        Console.WriteLine("Query: OrderedCoords on collection with all duplicate X values");
+        Console.WriteLine("Testing OrderedCoords with duplicate X values:");
         var emptyCoordsQuery = testCollection2.OrderedCoords;
-        Console.WriteLine(emptyCoordsQuery != null 
-                          ? $"Result: {string.Join(", ", emptyCoordsQuery)}" 
-                          : "Result: No unique coordinates found (all X values are duplicates)");
-    }
+        
+        if (emptyCoordsQuery != null)
+        {
+            Console.WriteLine($"[ {string.Join(", ", emptyCoordsQuery)} ]");
+        }
+        else
+        {
+            Console.WriteLine("[<no unique coordinates>]");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("ALL TESTS COMPLETED");
+        Console.WriteLine("===================");    }
 }
