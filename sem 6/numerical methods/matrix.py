@@ -1,4 +1,27 @@
-class Matrix: ...
+from typing import Iterable
+import copy
+
+
+class Matrix[T]:
+    def __init__(self, raw_matrix: Iterable[Iterable[T]]):
+        self.__raw: list[list[T]] = list(map(list, raw_matrix))
+        if not self.__raw:
+            assert False, "TODO: raise ValueError"
+        self.__rows = len(self.__raw)
+        self.__cols = len(self.__raw[0])
+        if not all(len(row) == self.__cols for row in self.__raw):
+            assert False, "TODO: raise ValueError"
+
+    def copy(self) -> "Matrix":
+        return Matrix(copy.deepcopy(self.__raw))
+
+    @property
+    def rows(self) -> int:
+        return self.__rows
+
+    @property
+    def cols(self) -> int:
+        return self.__cols
 
 
 def test_matmul():
