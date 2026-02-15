@@ -97,12 +97,12 @@ class Matrix[T]:
 
 
 def test_matmul():
-    assert Matrix([[1, 2], [3, 4]]) * Matrix([[5, 6], [7, 8]]) == Matrix([[19, 22], [43, 50]])
-    assert Matrix([[1, 2], [3, 4]]) * Matrix([[1, 0], [0, 1]]) == Matrix([[1, 2], [3, 4]])
-    assert Matrix([[1, 0], [0, 1]]) * Matrix([[1, 2], [3, 4]]) == Matrix([[1, 2], [3, 4]])
-    assert Matrix([[1, 2], [3, 4]]) * Matrix([[1], [0]]) == Matrix([[1], [3]])
-    assert Matrix([[1, 2], [3, 4]]) * Matrix([[0], [1]]) == Matrix([[2], [4]])
-    assert Matrix([[1, 2, 3], [4, 5, 6]]) * Matrix([[-1], [0], [1]]) == Matrix([[2], [2]])
+    assert Matrix([[1, 2], [3, 4]]) @ Matrix([[5, 6], [7, 8]]) == Matrix([[19, 22], [43, 50]])
+    assert Matrix([[1, 2], [3, 4]]) @ Matrix([[1, 0], [0, 1]]) == Matrix([[1, 2], [3, 4]])
+    assert Matrix([[1, 0], [0, 1]]) @ Matrix([[1, 2], [3, 4]]) == Matrix([[1, 2], [3, 4]])
+    assert Matrix([[1, 2], [3, 4]]) @ Matrix([[1], [0]]) == Matrix([[1], [3]])
+    assert Matrix([[1, 2], [3, 4]]) @ Matrix([[0], [1]]) == Matrix([[2], [4]])
+    assert Matrix([[1, 2, 3], [4, 5, 6]]) @ Matrix([[-1], [0], [1]]) == Matrix([[2], [2]])
 
 
 def test_scalmul():
@@ -133,3 +133,7 @@ def test_scalmatops():
     assert Matrix([[1, 2, 3], [4, 5, 6]]) + 0.3 == Matrix([[1.3, 2.3, 3.3], [4.3, 5.3, 6.3]])
     assert 0.3 + Matrix([[1, 2, 3], [4, 5, 6]]) == Matrix([[1.3, 2.3, 3.3], [4.3, 5.3, 6.3]])
     assert Matrix([[1, 2, 3], [4, 5, 6]]) - 0.3 == Matrix([[0.7, 1.7, 2.7], [3.7, 4.7, 5.7]])
+
+def test_matrix_constructors():
+    assert Matrix([[1], [2], [3]]) == Matrix.from_vec([1, 2, 3])
+
