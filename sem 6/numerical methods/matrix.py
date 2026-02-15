@@ -48,13 +48,6 @@ class Matrix[T]:
         return NotImplemented
 
     def __mul__(self, other) -> "Matrix":
-        if isinstance(other, Matrix):
-            if self.cols != other.rows:
-                assert False, "TODO: raise ValueError"
-            return Matrix(
-                (sum(self[i, k] * other[k, j] for k in range(self.cols)) for j in range(other.cols))
-                for i in range(self.rows)
-            )
         if isinstance(other, (int, float)):
             return Matrix(((v * other for v in row) for row in self.__raw))
         return NotImplemented
@@ -67,13 +60,21 @@ class Matrix[T]:
     def __truediv__(self, other) -> "Matrix":
         if isinstance(other, (int, float)):
             return Matrix(((v / other for v in row) for row in self.__raw))
-
         return NotImplemented
 
     def __floordiv__(self, other) -> "Matrix":
         if isinstance(other, int):
             return Matrix(((v // other for v in row) for row in self.__raw))
+        return NotImplemented
 
+    def __matmul__(self, other) -> "Matrix[T]":
+        if isinstance(other, Matrix):
+            if self.cols != other.rows:
+                assert False, "TODO: raise ValueError"
+            return Matrix(
+                (sum(self[i, k] * other[k, j] for k in range(self.cols)) for j in range(other.cols))
+                for i in range(self.rows)
+            )
         return NotImplemented
 
     def __getitem__(self, index: tuple[int, int]) -> T:
@@ -134,6 +135,6 @@ def test_scalmatops():
     assert 0.3 + Matrix([[1, 2, 3], [4, 5, 6]]) == Matrix([[1.3, 2.3, 3.3], [4.3, 5.3, 6.3]])
     assert Matrix([[1, 2, 3], [4, 5, 6]]) - 0.3 == Matrix([[0.7, 1.7, 2.7], [3.7, 4.7, 5.7]])
 
+
 def test_matrix_constructors():
     assert Matrix([[1], [2], [3]]) == Matrix.from_vec([1, 2, 3])
-
