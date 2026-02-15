@@ -32,7 +32,6 @@ class Matrix[T]:
                 (sum(self[i, k] * other[k, j] for k in range(self.cols)) for j in range(other.cols))
                 for i in range(self.rows)
             )
-        return NotImplemented
 
     def __getitem__(self, index: tuple[int, int]) -> T:
         i, j = index
@@ -61,3 +60,10 @@ def test_matmul():
     assert Matrix([[1, 2], [3, 4]]) * Matrix([[1], [0]]) == Matrix([[1], [3]])
     assert Matrix([[1, 2], [3, 4]]) * Matrix([[0], [1]]) == Matrix([[2], [4]])
     assert Matrix([[1, 2, 3], [4, 5, 6]]) * Matrix([[-1], [0], [1]]) == Matrix([[2], [2]])
+
+
+def test_scalmul():
+    assert Matrix([[1, 2], [3, 4]]) * 2 == Matrix([[2, 4], [6, 8]])
+    assert 2 * Matrix([[1, 2], [3, 4]]) == Matrix([[2, 4], [6, 8]])
+    assert Matrix([[1, 2], [3, 4]]) * 0.5 == Matrix([[0.5, 1], [1.5, 2]])
+    assert 0.5 * Matrix([[1, 2], [3, 4]]) == Matrix([[0.5, 1], [1.5, 2]])
