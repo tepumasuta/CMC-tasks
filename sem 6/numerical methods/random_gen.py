@@ -272,6 +272,15 @@ def generate_random_linear_system[T](
     return GeneratedLinearSystem(system, solution, rhs)
 
 
+def generate_random_unsolvable_linear_system[T](
+    *, size: int, low=None, high=None, span: None | range = None, value_type=None
+):
+    system = generate_random_singular_matrix(size=size, low=low, high=high, span=span, value_type=value_type)
+    solution = generate_random_vec(length=size, low=low, high=high, span=span, value_type=value_type)
+    rhs = system @ solution
+    return GeneratedLinearSystem(system, solution, rhs)
+
+
 def test_random_matrices():
     seeds = random.choices(range(2_781_443_143_657_574), k=10**5)
     state = random.getstate()
