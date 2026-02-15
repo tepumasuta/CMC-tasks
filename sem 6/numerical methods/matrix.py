@@ -128,6 +128,9 @@ def test_matops():
     assert Matrix([[1, 2], [3, 4]]) - Matrix([[1, 0], [0, 1]]) == Matrix([[0, 2], [3, 3]])
     assert Matrix([[1, 2, 3], [4, 5, 6]]) + Matrix([[1, 1, 1], [1, 1, 1]]) == Matrix([[2, 3, 4], [5, 6, 7]])
     assert Matrix([[1, 2, 3], [4, 5, 6]]) - Matrix([[1, 1, 1], [1, 1, 1]]) == Matrix([[0, 1, 2], [3, 4, 5]])
+    assert Matrix([[1, 2], [3, 4]]) * Matrix([[5, 6], [7, 8]]) == Matrix([[5, 12], [21, 32]])
+    assert Matrix([[1, 2], [3, 4]]) / Matrix([[2, 2], [2, 2]]) == Matrix([[0.5, 1.0], [1.5, 2.0]])
+    assert Matrix([[1, 2], [3, 4]]) // Matrix([[2, 2], [2, 2]]) == Matrix([[0, 1], [1, 2]])
 
 
 def test_scalmatops():
@@ -142,3 +145,40 @@ def test_scalmatops():
 
 def test_matrix_constructors():
     assert Matrix([[1], [2], [3]]) == Matrix.from_vec([1, 2, 3])
+    assert Matrix.zero(1, 3) == Matrix([[0, 0, 0]])
+    assert Matrix.zero(3, 1) == Matrix.from_vec([0, 0, 0])
+    assert Matrix.zero(2, 2) == Matrix([[0, 0], [0, 0]])
+
+
+def test_inplaceops():
+    vec = Matrix.from_vec([1, 2, 3])
+    vec += vec
+    assert vec == Matrix.from_vec([2, 4, 6])
+    vec //= 2
+    assert vec == Matrix.from_vec([1, 2, 3])
+    vec *= 3
+    assert vec == Matrix.from_vec([3, 6, 9])
+    vec /= 1.5
+    assert vec == Matrix.from_vec([2, 4, 6])
+    vec -= vec
+    assert vec == Matrix.zero(3, 1)
+    vec += 1
+    assert vec == Matrix.from_vec([1, 1, 1])
+    vec *= Matrix.from_vec([1, 2, 3])
+    assert vec == Matrix.from_vec([1, 2, 3])
+    vec //= vec
+    assert vec == Matrix.from_vec([1, 1, 1])
+    vec /= Matrix.from_vec([1, 2, 0.5])
+    assert vec == Matrix.from_vec([1, 0.5, 2])
+    vec += 2.5
+    assert vec == Matrix.from_vec([3.5, 3.0, 4.5])
+    vec -= 2
+    assert vec == Matrix.from_vec([1.5, 1.0, 2.5])
+    vec -= 1.5
+    assert vec == Matrix.from_vec([0.0, -0.5, 1.0])
+    vec *= 1.5
+    assert vec == Matrix.from_vec([0.0, -0.75, 1.5])
+    vec /= 2
+    assert vec == Matrix.from_vec([0.0, -0.375, 0.75])
+    vec @= Matrix([[1, 2, 3]])
+    assert vec == Matrix([[0, 0, 0], [-0.375, -0.375 * 2, -0.375 * 3], [0.75, 0.75 * 2, 0.75 * 3]]).T
