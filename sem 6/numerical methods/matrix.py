@@ -559,3 +559,22 @@ def test_rowcolmatinsert():
     assert mat == Matrix([[0, 50, 70], [50, 101, 30], [70, 102, 90]])
     mat.col[1] = mat.row[2]
     assert mat == Matrix([[0, 70, 70], [50, 102, 30], [70, 90, 90]])
+
+
+def test_swap():
+    mat = Matrix([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    mat.swap_rows(0, 2)
+    assert mat == Matrix([[7, 8, 9], [4, 5, 6], [1, 2, 3]])
+    mat.swap_cols(2, 1)
+    assert mat == Matrix([[7, 9, 8], [4, 6, 5], [1, 3, 2]])
+    mat.swap_rows(1, 1)
+    assert mat == Matrix([[7, 9, 8], [4, 6, 5], [1, 3, 2]])
+    mat.swap_cols(0, 0)
+    assert mat == Matrix([[7, 9, 8], [4, 6, 5], [1, 3, 2]])
+    mat.swap_rows(0, 1)
+    assert mat == Matrix([[4, 6, 5], [7, 9, 8], [1, 3, 2]])
+    mat.swap_cols(0, 2)
+    assert mat == Matrix([[5, 6, 4], [8, 9, 7], [2, 3, 1]])
+    mat.swap_cols(0, 2)
+    mat.swap_cols(0, 2)
+    assert mat == Matrix([[5, 6, 4], [8, 9, 7], [2, 3, 1]])
