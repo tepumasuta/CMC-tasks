@@ -24,7 +24,7 @@ class Matrix[T]:
     def cols(self) -> int:
         return self.__cols
 
-    def __mul__(self, other) -> "Matrix[T]":
+    def __mul__(self, other) -> "Matrix":
         if type(other) is Matrix:
             if self.cols != other.rows:
                 assert False, "TODO: raise ValueError"
@@ -32,6 +32,14 @@ class Matrix[T]:
                 (sum(self[i, k] * other[k, j] for k in range(self.cols)) for j in range(other.cols))
                 for i in range(self.rows)
             )
+        if type(other) in (int, float):
+            return Matrix([[v * other for v in row] for row in self.__raw])
+        return NotImplemented
+
+    def __rmul__(self, other) -> "Matrix":
+        if isinstance(other, (int, float)):
+            return self.__mul__(other)
+        return NotImplemented
 
     def __getitem__(self, index: tuple[int, int]) -> T:
         i, j = index
