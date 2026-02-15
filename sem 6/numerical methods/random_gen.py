@@ -173,6 +173,7 @@ def generate_mixed_matrix_with_known_determinant[T](
         rows = random.randrange(2)
         i = random.randrange(m.rows)
         j = random.randrange(m.cols)
+        if i == j: continue
         if rows:
             m.swap_rows(i, j)
         else:
