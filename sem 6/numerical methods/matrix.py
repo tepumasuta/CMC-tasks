@@ -100,6 +100,10 @@ class Matrix[T]:
     def from_vec(vec: Iterable[T]) -> "Matrix[T]":
         return Matrix([[v] for v in vec])
 
+    @staticmethod
+    def zero(rows: int, cols: int) -> "Matrix[T]":
+        return Matrix([[0] * cols for _ in range(rows)])
+
 
 def test_matmul():
     assert Matrix([[1, 2], [3, 4]]) @ Matrix([[5, 6], [7, 8]]) == Matrix([[19, 22], [43, 50]])
