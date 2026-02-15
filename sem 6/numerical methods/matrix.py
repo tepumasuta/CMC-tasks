@@ -29,12 +29,14 @@ class Matrix[T]:
             if self.cols != other.cols or self.rows != other.rows:
                 assert False, "TODO: raise ValueError"
             return Matrix(((self[i, j] + other[i, j] for j in range(self.cols)) for i in range(self.rows)))
+        return NotImplemented
 
     def __sub__(self, other) -> "Matrix":
         if isinstance(other, Matrix):
             if self.cols != other.cols or self.rows != other.rows:
                 assert False, "TODO: raise ValueError"
             return Matrix(((self[i, j] - other[i, j] for j in range(self.cols)) for i in range(self.rows)))
+        return NotImplemented
 
     def __mul__(self, other) -> "Matrix":
         if isinstance(other, Matrix):
@@ -112,3 +114,11 @@ def test_matops():
     assert Matrix([[1, 2], [3, 4]]) - Matrix([[1, 0], [0, 1]]) == Matrix([[0, 2], [3, 3]])
     assert Matrix([[1, 2, 3], [4, 5, 6]]) + Matrix([[1, 1, 1], [1, 1, 1]]) == Matrix([[2, 3, 4], [5, 6, 7]])
     assert Matrix([[1, 2, 3], [4, 5, 6]]) - Matrix([[1, 1, 1], [1, 1, 1]]) == Matrix([[0, 1, 2], [3, 4, 5]])
+
+
+def test_scalmatops():
+    assert Matrix([[1, 2], [3, 4]]) + 0 == Matrix([[1, 2], [3, 4]])
+    assert Matrix([[1, 2], [3, 4]]) + 1 == Matrix([[2, 3], [4, 5]])
+    assert Matrix([[1, 2], [3, 4]]) - 1 == Matrix([[0, 1], [2, 3]])
+    assert Matrix([[1, 2, 3], [4, 5, 6]]) + 0.3 == Matrix([[1.3, 2.3, 3.3], [4.3, 5.3, 6.3]])
+    assert Matrix([[1, 2, 3], [4, 5, 6]]) - 0.3 == Matrix([[0.7, 1.7, 2.7], [3.7, 4.7, 5.7]])
