@@ -4,7 +4,6 @@ import dataclasses
 import random
 import itertools
 import math
-from fractions import Fraction
 
 # TODO: Refactor into element params or so
 
@@ -177,7 +176,7 @@ def generate_random_diagonal_matrix(
 
 def generate_mixed_matrix_with_known_determinant[T](
     *, size=None, low=None, high=None, span: None | range = None, value_type=None, swaps=100
-) -> "tuple[matrix.Matrix, T]":
+) -> "tuple[matrix.Matrix[T], T]":
     m = generate_random_upper_triangular_matrix(size=size, low=low, high=high, span=span, value_type=value_type)
     det = math.prod(m[i, i] for i in range(m.cols))
     for _ in range(swaps):
@@ -192,6 +191,25 @@ def generate_mixed_matrix_with_known_determinant[T](
             m.swap_cols(i, j)
         det *= -1
     return m, det
+
+
+def generate_random_singular_matrix[T](
+    *, size=None, low=None, high=None, span: None | range = None, value_type=None, swaps=100
+) -> "matrix.Matrix[T]":
+    m = generate_random_upper_triangular_matrix(size=size, low=low, high=high, span=span, value_type=value_type)
+    for i in range(size):
+        m[i, i] = 0
+    for _ in range(swaps):
+        rows = random.randrange(2)
+        i = random.randrange(m.rows)
+        j = random.randrange(m.cols)
+        if i == j:
+            continue
+        if rows:
+            m.swap_rows(i, j)
+        else:
+            m.swap_cols(i, j)
+    return m
 
 
 def generate_random_vec[T](*, length=None, low=None, high=None, span: None | range = None, value_type=None):
@@ -580,26 +598,27 @@ def test_random_singular_matrix():
             low, high = random.randint(-(10**5), 10**5), random.randint(-(10**5), 10**5)
             low, high = min(low, high), max(low, high)
             mat = generate_random_singular_matrix(size=size, low=low, high=high)
-            assert all(low <= mat[i, j] <= high for i, j in itertools.product(range(size), repeat=2))
+            assert all(low <= mat[i, j] <= high or mat[i, j] == 0 for i, j in itertools.product(range(size), repeat=2))
             assert mat.cols == mat.rows == size
             assert mat.generic_type is int
             assert mat.det() == 0
         for size in range(1, 6):
             mat = generate_random_singular_matrix(size=size, low=-666, high=15.0)
-            assert all(-666 <= mat[i, j] <= 15.0 for i, j in itertools.product(range(size), repeat=2))
+            assert all(-666 <= mat[i, j] <= 15.0 or mat[i, j] == 0 for i, j in itertools.product(range(size), repeat=2))
             assert mat.cols == mat.rows == size
             assert mat.generic_type == float
             assert mat.det() == 0
         for size in range(1, 6):
             mat = generate_random_singular_matrix(size=size, value_type=float)
-            assert all(0.0 <= mat[i, j] <= 1.0 for i, j in itertools.product(range(size), repeat=2))
+            assert all(0.0 <= mat[i, j] <= 1.0 or mat[i, j] == 0 for i, j in itertools.product(range(size), repeat=2))
             assert mat.cols == mat.rows == size
             assert mat.generic_type == float
             assert mat.det() == 0
         for size in range(1, 6):
             mat = generate_random_singular_matrix(size=size, span=range(-100, 200, 5))
             assert all(
-                -100 <= mat[i, j] <= 200 and mat[i, j] % 5 == 0 for i, j in itertools.product(range(size), repeat=2)
+                -100 <= mat[i, j] <= 200 and mat[i, j] % 5 == 0 or mat[i, j] == 0
+                for i, j in itertools.product(range(size), repeat=2)
             )
             assert mat.cols == mat.rows == size
             assert mat.generic_type is int
