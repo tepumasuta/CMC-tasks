@@ -113,7 +113,7 @@ class Matrix[U]:
             assert False, "TODO: raise KeyError"
 
         def __setitem__(self, index, value: Iterable[U]):
-            if isinstance(value, Matrix.Row) and value.index == index:
+            if isinstance(value, Matrix.Row) and value.index == index and self.base == value.mat:
                 return
             if not isinstance(value, Sized) or isinstance(value, Matrix.Col) and value.mat is self.base:
                 value = tuple(value)
@@ -132,7 +132,7 @@ class Matrix[U]:
             assert False, "TODO: raise KeyError"
 
         def __setitem__(self, index, value: Iterable[U]):
-            if isinstance(value, Matrix.Col) and value.index == index:
+            if isinstance(value, Matrix.Col) and value.index == index and self.base == value.mat:
                 return
             if not isinstance(value, Sized) or isinstance(value, Matrix.Row) and value.mat is self.base:
                 value = tuple(value)
@@ -403,7 +403,7 @@ class Matrix[U]:
 
     def __repr__(self) -> str:
         max_spacing = max(len(str(v)) for row in self.__raw for v in row)
-        return f'{'\n'.join(f'[{' '.join(str(v).ljust(max_spacing)for v in row)}]' for row in self.__raw)}'
+        return f'{'\n'.join(f'[{' '.join(str(v).rjust(max_spacing)for v in row)}]' for row in self.__raw)}'
 
     def swap_rows(self, i, j):
         if i == j:
