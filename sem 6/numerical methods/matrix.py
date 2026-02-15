@@ -2,6 +2,7 @@ from collections.abc import Sized
 from typing import Iterable
 import copy
 import itertools
+import functools
 import math
 import weakref
 
@@ -139,12 +140,13 @@ class Matrix[U]:
 
     def __init__(self, raw_matrix: Iterable[Iterable[U]]):
         self.__raw: list[list[U]] = list(map(list, raw_matrix))
-        if not self.__raw:
+        if not self.__raw or not self.__raw[0]:
             assert False, "TODO: raise ValueError"
         self.__rows = len(self.__raw)
         self.__cols = len(self.__raw[0])
         if not all(len(row) == self.__cols for row in self.__raw):
             assert False, "TODO: raise ValueError"
+        self.__type = functools.reduce(Matrix.__merge_types, map(type, itertools.chain.from_iterable(self.__raw)))
 
     def copy(self) -> "Matrix[U]":
         return Matrix(copy.deepcopy(self.__raw))
@@ -156,6 +158,10 @@ class Matrix[U]:
     @property
     def cols(self) -> int:
         return self.__cols
+
+    @property
+    def generic_type(self) -> U:
+        return self.__type
 
     @property
     def T(self) -> "Matrix[T]":
@@ -192,9 +198,11 @@ class Matrix[U]:
                 self.__raw = [[tmp[i][j] + tmp[i][j] for j in range(self.cols)] for i in range(self.rows)]
             else:
                 self.__raw = [[self[i, j] + other[i, j] for j in range(self.cols)] for i in range(self.rows)]
+            self.__type = self.__merge_types(self.generic_type, other.generic_type)
             return self
         if isinstance(other, (int, float)):
             self.__raw = [[self[i, j] + other for j in range(self.cols)] for i in range(self.rows)]
+            self.__type = self.__merge_types(self.generic_type, type(other))
             return self
         return NotImplemented
 
@@ -216,9 +224,11 @@ class Matrix[U]:
                 self.__raw = [[tmp[i][j] - tmp[i][j] for j in range(self.cols)] for i in range(self.rows)]
             else:
                 self.__raw = [[self[i, j] - other[i, j] for j in range(self.cols)] for i in range(self.rows)]
+            self.__type = self.__merge_types(self.generic_type, other.generic_type)
             return self
         if isinstance(other, (int, float)):
             self.__raw = [[self[i, j] - other for j in range(self.cols)] for i in range(self.rows)]
+            self.__type = self.__merge_types(self.generic_type, type(other))
             return self
         return NotImplemented
 
@@ -245,9 +255,11 @@ class Matrix[U]:
                 self.__raw = [[tmp[i][j] * tmp[i][j] for j in range(self.cols)] for i in range(self.rows)]
             else:
                 self.__raw = [[self[i, j] * other[i, j] for j in range(self.cols)] for i in range(self.rows)]
+            self.__type = self.__merge_types(self.generic_type, other.generic_type)
             return self
         if isinstance(other, (int, float)):
             self.__raw = [[v * other for v in row] for row in self.__raw]
+            self.__type = self.__merge_types(self.generic_type, type(other))
             return self
         return NotImplemented
 
@@ -269,9 +281,11 @@ class Matrix[U]:
                 self.__raw = [[tmp[i][j] / tmp[i][j] for j in range(self.cols)] for i in range(self.rows)]
             else:
                 self.__raw = [[self[i, j] / other[i, j] for j in range(self.cols)] for i in range(self.rows)]
+            self.__type = self.__merge_types(self.generic_type, other.generic_type)
             return self
         if isinstance(other, (int, float)):
             self.__raw = [[v / other for v in row] for row in self.__raw]
+            self.__type = self.__merge_types(self.generic_type, type(other))
             return self
         return NotImplemented
 
@@ -325,6 +339,7 @@ class Matrix[U]:
                     for i in range(self.rows)
                 ]
                 self.__cols = other.cols
+            self.__type = self.__merge_types(self.generic_type, other.generic_type)
             return self
         return NotImplemented
 
@@ -339,24 +354,16 @@ class Matrix[U]:
         if i not in range(self.rows) or j not in range(self.cols):
             assert False, "TODO: raise KeyError"
         self.__raw[i][j] = value
+        self.__type = self.__merge_types(self.generic_type, type(value))
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, Matrix):
             return False
+        cmp = self.__get_cmp(self.__merge_types(self.generic_type, other.generic_type))
         return (
             self.cols == other.cols
             and self.rows == other.rows
-            and (
-                all(self[i, j] == other[i, j] for i, j in itertools.product(range(self.rows), range(self.cols)))
-                if self.cols == 0
-                or not any(
-                    isinstance(self[i, j], float) for i, j in itertools.product(range(self.rows), range(self.cols))
-                )
-                else all(
-                    math.isclose(self[i, j], other[i, j])
-                    for i, j in itertools.product(range(self.rows), range(self.cols))
-                )
-            )
+            and all(cmp(self[i, j], other[i, j]) for i, j in itertools.product(range(self.rows), range(self.cols)))
         )
 
     def __repr__(self) -> str:
@@ -373,6 +380,26 @@ class Matrix[U]:
             return
         for k in range(self.rows):
             self[k, i], self[k, j] = self[k, j], self[k, i]
+
+    @staticmethod
+    def __merge_types(t1: type, t2: type) -> type:
+        if t1 is float and t2 is float:
+            return float
+        if t1 is float and t2 is int:
+            return float
+        if t1 is int and t2 is float:
+            return float
+        if t1 is int and t2 is int:
+            return int
+        assert False, "TODO: raise ValueError"
+
+    @staticmethod
+    def __get_cmp(t):
+        if t is float:
+            return lambda x, y: math.isclose(x, y)
+        if issubclass(t, int):
+            return lambda x, y: x == y
+        assert False, "TODO: raise ValueError"
 
     @staticmethod
     def vec(vec: Iterable[U]) -> "Matrix[U]":
