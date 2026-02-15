@@ -525,3 +525,41 @@ def test_rowcolmatops():
     assert mat == Matrix([[-1, -1, 0], [-0.5, 0.0, 0.5], [5, 3, 4]])
     assert list(second_col) == [-1, 0.0, 3]
     assert list(second_row) == [-0.5, 0.0, 0.5]
+
+
+def test_rowcolmatinsert():
+    mat = Matrix([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    mat.row[2] = mat.col[0]
+    assert mat == Matrix([[1, 2, 3], [4, 5, 6], [1, 4, 7]])
+    mat.row[2] = mat.col[0]
+    assert mat == Matrix([[1, 2, 3], [4, 5, 6], [1, 4, 7]])
+    mat.col[1] = mat.row[0]
+    assert mat == Matrix([[1, 1, 3], [4, 2, 6], [1, 3, 7]])
+    mat.row[0] = mat.col[2]
+    assert mat == Matrix([[3, 6, 7], [4, 2, 6], [1, 3, 7]])
+    mat.col[2] = mat.col[1]
+    assert mat == Matrix([[3, 1, 1], [4, 2, 2], [1, 3, 3]])
+    mat.row[1] = [10, 20, 30]
+    assert mat == Matrix([[3, 1, 1], [10, 20, 30], [1, 3, 3]])
+    mat.col[0] = (40, 50, 60)
+    assert mat == Matrix([[40, 1, 1], [50, 20, 30], [60, 3, 3]])
+    mat.row[2] = iter([70, 80, 90])
+    assert mat == Matrix([[40, 1, 1], [50, 20, 30], [70, 80, 90]])
+    mat.col[1] = range(100, 103)
+    assert mat == Matrix([[40, 100, 1], [50, 101, 30], [70, 102, 90]])
+    mat.row[0] = (x * 2 for x in range(3))
+    assert mat == Matrix([[0, 2, 4], [50, 101, 30], [70, 102, 90]])
+    row1_ref = mat.row[1]
+    mat.row[1] = mat.row[1]
+    assert mat == Matrix([[0, 2, 4], [50, 101, 30], [70, 102, 90]])
+    assert list(row1_ref) == [50, 101, 30]
+    col2_ref = mat.col[2]
+    mat.col[2] = mat.col[2]
+    assert mat == Matrix([[0, 2, 4], [50, 101, 30], [70, 102, 90]])
+    assert list(col2_ref) == [4, 30, 90]
+    mat.row[0] = mat.col[0]
+    assert mat == Matrix([[0, 2, 4], [50, 101, 30], [70, 102, 90]])
+    mat.row[0] = mat.col[0]
+    assert mat == Matrix([[0, 50, 70], [50, 101, 30], [70, 102, 90]])
+    mat.col[1] = mat.row[2]
+    assert mat == Matrix([[0, 70, 70], [50, 102, 30], [70, 90, 90]])
