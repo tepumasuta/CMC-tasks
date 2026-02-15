@@ -2,6 +2,7 @@ from matrix import Matrix
 
 import random
 import itertools
+import math
 
 
 def generate_random_matrix(
@@ -161,6 +162,23 @@ def generate_random_diagonal_matrix(
     else:
         assert False, "TODO: raise ValueError"
     return Matrix.diag(linearized)
+
+
+def generate_mixed_matrix_with_known_determinant[T](
+    *, size=None, low=None, high=None, span: None | range = None, value_type=None, swaps=100
+) -> tuple[Matrix, T]:
+    m = generate_random_upper_triangular_matrix(size=size, low=low, high=high, span=span, value_type=value_type)
+    det = math.prod(m[i, i] for i in range(m.cols))
+    for _ in range(swaps):
+        rows = random.randrange(2)
+        i = random.randrange(m.rows)
+        j = random.randrange(m.cols)
+        if rows:
+            m.swap_rows(i, j)
+        else:
+            m.swap_cols(i, j)
+        det *= -1
+    return m, det
 
 
 def test_random_matrices():
