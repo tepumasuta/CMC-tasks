@@ -48,6 +48,10 @@ class Matrix[T]:
         return NotImplemented
 
     def __mul__(self, other) -> "Matrix":
+        if isinstance(other, Matrix):
+            if self.cols != other.cols or self.rows != other.rows:
+                assert False, "TODO: raise ValueError"
+            return Matrix(((self[i, j] * other[i, j] for j in range(self.cols)) for i in range(self.rows)))
         if isinstance(other, (int, float)):
             return Matrix(((v * other for v in row) for row in self.__raw))
         return NotImplemented
@@ -58,11 +62,19 @@ class Matrix[T]:
         return NotImplemented
 
     def __truediv__(self, other) -> "Matrix":
+        if isinstance(other, Matrix):
+            if self.cols != other.cols or self.rows != other.rows:
+                assert False, "TODO: raise ValueError"
+            return Matrix(((self[i, j] / other[i, j] for j in range(self.cols)) for i in range(self.rows)))
         if isinstance(other, (int, float)):
             return Matrix(((v / other for v in row) for row in self.__raw))
         return NotImplemented
 
     def __floordiv__(self, other) -> "Matrix":
+        if isinstance(other, Matrix):
+            if self.cols != other.cols or self.rows != other.rows:
+                assert False, "TODO: raise ValueError"
+            return Matrix(((self[i, j] // other[i, j] for j in range(self.cols)) for i in range(self.rows)))
         if isinstance(other, int):
             return Matrix(((v // other for v in row) for row in self.__raw))
         return NotImplemented
