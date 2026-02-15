@@ -7,6 +7,7 @@ import itertools
 import functools
 import math
 import weakref
+from fractions import Fraction
 
 
 class Matrix[U]:
@@ -22,35 +23,35 @@ class Matrix[U]:
             yield from (self.mat[self.index, j] for j in range(self.mat.cols))
 
         def __iadd__(self, other):
-            if isinstance(other, (int, float)):
+            if isinstance(other, (int, float, Fraction)):
                 for j in range(self.mat.cols):
                     self.mat[self.index, j] += other
                 return self
             return NotImplemented
 
         def __isub__(self, other):
-            if isinstance(other, (int, float)):
+            if isinstance(other, (int, float, Fraction)):
                 for j in range(self.mat.cols):
                     self.mat[self.index, j] -= other
                 return self
             return NotImplemented
 
         def __imul__(self, other):
-            if isinstance(other, (int, float)):
+            if isinstance(other, (int, float, Fraction)):
                 for j in range(self.mat.cols):
                     self.mat[self.index, j] *= other
                 return self
             return NotImplemented
 
         def __itruediv__(self, other):
-            if isinstance(other, (int, float)):
+            if isinstance(other, (int, float, Fraction)):
                 for j in range(self.mat.cols):
                     self.mat[self.index, j] /= other
                 return self
             return NotImplemented
 
         def __ifloordiv__(self, other):
-            if isinstance(other, (int, float)):
+            if isinstance(other, int):
                 for j in range(self.mat.cols):
                     self.mat[self.index, j] //= other
                 return self
@@ -68,35 +69,35 @@ class Matrix[U]:
             yield from (self.mat[i, self.index] for i in range(self.mat.rows))
 
         def __iadd__(self, other):
-            if isinstance(other, (int, float)):
+            if isinstance(other, (int, float, Fraction)):
                 for i in range(self.mat.rows):
                     self.mat[i, self.index] += other
                 return self
             return NotImplemented
 
         def __isub__(self, other):
-            if isinstance(other, (int, float)):
+            if isinstance(other, (int, float, Fraction)):
                 for i in range(self.mat.rows):
                     self.mat[i, self.index] -= other
                 return self
             return NotImplemented
 
         def __imul__(self, other):
-            if isinstance(other, (int, float)):
+            if isinstance(other, (int, float, Fraction)):
                 for i in range(self.mat.rows):
                     self.mat[i, self.index] *= other
                 return self
             return NotImplemented
 
         def __itruediv__(self, other):
-            if isinstance(other, (int, float)):
+            if isinstance(other, (int, float, Fraction)):
                 for i in range(self.mat.rows):
                     self.mat[i, self.index] /= other
                 return self
             return NotImplemented
 
         def __ifloordiv__(self, other):
-            if isinstance(other, (int, float)):
+            if isinstance(other, int):
                 for i in range(self.mat.rows):
                     self.mat[i, self.index] //= other
                 return self
@@ -140,7 +141,7 @@ class Matrix[U]:
             for i, v in enumerate(value):
                 self.base[i, index] = v
 
-    def __init__(self, raw_matrix: Iterable[Iterable[U]]):
+    def __init__(self, raw_matrix: Iterable[Iterable[U]], *, convert_to_fractions=True):
         self.__raw: list[list[U]] = list(map(list, raw_matrix))
         if not self.__raw or not self.__raw[0]:
             assert False, "TODO: raise ValueError"
@@ -149,9 +150,12 @@ class Matrix[U]:
         if not all(len(row) == self.__cols for row in self.__raw):
             assert False, "TODO: raise ValueError"
         self.__type = functools.reduce(Matrix.__merge_types, map(type, itertools.chain.from_iterable(self.__raw)))
+        if convert_to_fractions and self.generic_type is not float:
+            self.__raw = list(list(map(Fraction, row)) for row in self.__raw)
+            self.__type = Fraction
 
     def copy(self) -> "Matrix[U]":
-        return Matrix(copy.deepcopy(self.__raw))
+        return Matrix(copy.deepcopy(self.__raw), convert_to_fractions=False)
 
     @property
     def rows(self) -> int:
@@ -167,7 +171,7 @@ class Matrix[U]:
 
     @property
     def T(self) -> "Matrix[T]":
-        return Matrix(zip(*self.__raw))
+        return Matrix(zip(*self.__raw), convert_to_fractions=False)
 
     @property
     def row(self) -> RowsView:
@@ -188,13 +192,18 @@ class Matrix[U]:
         if isinstance(other, Matrix):
             if self.cols != other.cols or self.rows != other.rows:
                 assert False, "TODO: raise ValueError"
-            return Matrix(((self[i, j] + other[i, j] for j in range(self.cols)) for i in range(self.rows)))
-        if isinstance(other, (int, float)):
-            return Matrix(((self[i, j] + other for j in range(self.cols)) for i in range(self.rows)))
+            return Matrix(
+                ((self[i, j] + other[i, j] for j in range(self.cols)) for i in range(self.rows)),
+                convert_to_fractions=False,
+            )
+        if isinstance(other, (int, float, Fraction)):
+            return Matrix(
+                ((self[i, j] + other for j in range(self.cols)) for i in range(self.rows)), convert_to_fractions=False
+            )
         return NotImplemented
 
     def __radd__(self, other) -> "Matrix":
-        if isinstance(other, (int, float)):
+        if isinstance(other, (int, float, Fraction)):
             return self.__add__(other)
         return NotImplemented
 
@@ -209,7 +218,7 @@ class Matrix[U]:
                 self.__raw = [[self[i, j] + other[i, j] for j in range(self.cols)] for i in range(self.rows)]
             self.__type = self.__merge_types(self.generic_type, other.generic_type)
             return self
-        if isinstance(other, (int, float)):
+        if isinstance(other, (int, float, Fraction)):
             self.__raw = [[self[i, j] + other for j in range(self.cols)] for i in range(self.rows)]
             self.__type = self.__merge_types(self.generic_type, type(other))
             return self
@@ -219,9 +228,14 @@ class Matrix[U]:
         if isinstance(other, Matrix):
             if self.cols != other.cols or self.rows != other.rows:
                 assert False, "TODO: raise ValueError"
-            return Matrix(((self[i, j] - other[i, j] for j in range(self.cols)) for i in range(self.rows)))
-        if isinstance(other, (int, float)):
-            return Matrix(((self[i, j] - other for j in range(self.cols)) for i in range(self.rows)))
+            return Matrix(
+                ((self[i, j] - other[i, j] for j in range(self.cols)) for i in range(self.rows)),
+                convert_to_fractions=False,
+            )
+        if isinstance(other, (int, float, Fraction)):
+            return Matrix(
+                ((self[i, j] - other for j in range(self.cols)) for i in range(self.rows)), convert_to_fractions=False
+            )
         return NotImplemented
 
     def __isub__(self, other) -> "Matrix":
@@ -235,7 +249,7 @@ class Matrix[U]:
                 self.__raw = [[self[i, j] - other[i, j] for j in range(self.cols)] for i in range(self.rows)]
             self.__type = self.__merge_types(self.generic_type, other.generic_type)
             return self
-        if isinstance(other, (int, float)):
+        if isinstance(other, (int, float, Fraction)):
             self.__raw = [[self[i, j] - other for j in range(self.cols)] for i in range(self.rows)]
             self.__type = self.__merge_types(self.generic_type, type(other))
             return self
@@ -245,13 +259,16 @@ class Matrix[U]:
         if isinstance(other, Matrix):
             if self.cols != other.cols or self.rows != other.rows:
                 assert False, "TODO: raise ValueError"
-            return Matrix(((self[i, j] * other[i, j] for j in range(self.cols)) for i in range(self.rows)))
-        if isinstance(other, (int, float)):
-            return Matrix(((v * other for v in row) for row in self.__raw))
+            return Matrix(
+                ((self[i, j] * other[i, j] for j in range(self.cols)) for i in range(self.rows)),
+                convert_to_fractions=False,
+            )
+        if isinstance(other, (int, float, Fraction)):
+            return Matrix(((v * other for v in row) for row in self.__raw), convert_to_fractions=False)
         return NotImplemented
 
     def __rmul__(self, other) -> "Matrix":
-        if isinstance(other, (int, float)):
+        if isinstance(other, (int, float, Fraction)):
             return self.__mul__(other)
         return NotImplemented
 
@@ -266,7 +283,7 @@ class Matrix[U]:
                 self.__raw = [[self[i, j] * other[i, j] for j in range(self.cols)] for i in range(self.rows)]
             self.__type = self.__merge_types(self.generic_type, other.generic_type)
             return self
-        if isinstance(other, (int, float)):
+        if isinstance(other, (int, float, Fraction)):
             self.__raw = [[v * other for v in row] for row in self.__raw]
             self.__type = self.__merge_types(self.generic_type, type(other))
             return self
@@ -276,9 +293,12 @@ class Matrix[U]:
         if isinstance(other, Matrix):
             if self.cols != other.cols or self.rows != other.rows:
                 assert False, "TODO: raise ValueError"
-            return Matrix(((self[i, j] / other[i, j] for j in range(self.cols)) for i in range(self.rows)))
-        if isinstance(other, (int, float)):
-            return Matrix(((v / other for v in row) for row in self.__raw))
+            return Matrix(
+                ((self[i, j] / other[i, j] for j in range(self.cols)) for i in range(self.rows)),
+                convert_to_fractions=False,
+            )
+        if isinstance(other, (int, float, Fraction)):
+            return Matrix(((v / other for v in row) for row in self.__raw), convert_to_fractions=False)
         return NotImplemented
 
     def __itruediv__(self, other) -> "Matrix":
@@ -292,7 +312,7 @@ class Matrix[U]:
                 self.__raw = [[self[i, j] / other[i, j] for j in range(self.cols)] for i in range(self.rows)]
             self.__type = self.__merge_types(self.generic_type, other.generic_type)
             return self
-        if isinstance(other, (int, float)):
+        if isinstance(other, (int, float, Fraction)):
             self.__raw = [[v / other for v in row] for row in self.__raw]
             self.__type = self.__merge_types(self.generic_type, type(other))
             return self
@@ -302,9 +322,12 @@ class Matrix[U]:
         if isinstance(other, Matrix):
             if self.cols != other.cols or self.rows != other.rows:
                 assert False, "TODO: raise ValueError"
-            return Matrix(((self[i, j] // other[i, j] for j in range(self.cols)) for i in range(self.rows)))
+            return Matrix(
+                ((self[i, j] // other[i, j] for j in range(self.cols)) for i in range(self.rows)),
+                convert_to_fractions=False,
+            )
         if isinstance(other, int):
-            return Matrix(((v // other for v in row) for row in self.__raw))
+            return Matrix(((v // other for v in row) for row in self.__raw), convert_to_fractions=False)
         return NotImplemented
 
     def __ifloordiv__(self, other) -> "Matrix":
@@ -327,8 +350,11 @@ class Matrix[U]:
             if self.cols != other.rows:
                 assert False, "TODO: raise ValueError"
             return Matrix(
-                (sum(self[i, k] * other[k, j] for k in range(self.cols)) for j in range(other.cols))
-                for i in range(self.rows)
+                (
+                    (sum(self[i, k] * other[k, j] for k in range(self.cols)) for j in range(other.cols))
+                    for i in range(self.rows)
+                ),
+                convert_to_fractions=False,
             )
         return NotImplemented
 
@@ -398,10 +424,13 @@ class Matrix[U]:
         if row is not None and row not in range(self.rows):
             assert False, "TODO: raise ValueError"
         if col is None:
-            return Matrix(self.row[i] for i in range(self.rows) if i != row)
+            return Matrix((self.row[i] for i in range(self.rows) if i != row), convert_to_fractions=False)
         if row is None:
-            return Matrix(self.col[j] for j in range(self.cols) if j != col).T
-        return Matrix((self[i, j] for j in range(self.cols) if j != col) for i in range(self.rows) if i != row)
+            return Matrix((self.col[j] for j in range(self.cols) if j != col), convert_to_fractions=False).T
+        return Matrix(
+            ((self[i, j] for j in range(self.cols) if j != col) for i in range(self.rows) if i != row),
+            convert_to_fractions=False,
+        )
 
     def is_unit(self) -> bool:
         cmp = self.__get_cmp(self.generic_type)
@@ -437,6 +466,16 @@ class Matrix[U]:
             return float
         if t1 is int and t2 is float:
             return float
+        if t1 is float and t2 is Fraction:
+            return float
+        if t1 is Fraction and t2 is float:
+            return float
+        if t1 is Fraction and t2 is Fraction:
+            return Fraction
+        if t1 is int and t2 is Fraction:
+            return Fraction
+        if t1 is Fraction and t2 is int:
+            return Fraction
         if t1 is int and t2 is int:
             return int
         assert False, "TODO: raise ValueError"
@@ -445,30 +484,33 @@ class Matrix[U]:
     def __get_cmp(t) -> Callable[[U, U], bool]:
         if t is float:
             return lambda x, y: math.isclose(x, y)
-        if issubclass(t, int):
+        if issubclass(t, int) or t is Fraction:
             return lambda x, y: x == y
         assert False, "TODO: raise ValueError"
 
     @staticmethod
-    def vec(vec: Iterable[U]) -> "Matrix[U]":
-        return Matrix([[v] for v in vec])
+    def vec(vec: Iterable[U], *, convert_to_fractions=True) -> "Matrix[U]":
+        return Matrix([[v] for v in vec], convert_to_fractions=convert_to_fractions)
 
     @staticmethod
-    def zero(rows: int, cols: int) -> "Matrix[U]":
-        return Matrix([[0] * cols for _ in range(rows)])
+    def zero(rows: int, cols: int, *, convert_to_fractions=True) -> "Matrix[U]":
+        return Matrix([[0] * cols for _ in range(rows)], convert_to_fractions=convert_to_fractions)
 
     @staticmethod
-    def ones(rows: int, cols: int) -> "Matrix[U]":
-        return Matrix([[1] * cols for _ in range(rows)])
+    def ones(rows: int, cols: int, *, convert_to_fractions=True) -> "Matrix[U]":
+        return Matrix([[1] * cols for _ in range(rows)], convert_to_fractions=convert_to_fractions)
 
     @staticmethod
-    def diag(vec: Iterable[U]) -> "Matrix[U]":
+    def diag(vec: Iterable[U], *, convert_to_fractions=True) -> "Matrix[U]":
         vec = tuple(vec)
-        return Matrix((0,) * i + (v,) + (0,) * (len(vec) - i - 1) for i, v in enumerate(vec))
+        return Matrix(
+            ((0,) * i + (v,) + (0,) * (len(vec) - i - 1) for i, v in enumerate(vec)),
+            convert_to_fractions=convert_to_fractions,
+        )
 
     @staticmethod
-    def eye(size: int) -> "Matrix[U]":
-        return Matrix.diag((1,) * size)
+    def eye(size: int, *, convert_to_fractions=True) -> "Matrix[U]":
+        return Matrix.diag((1,) * size, convert_to_fractions=convert_to_fractions)
 
 
 def test_matrix_constructors():
@@ -512,6 +554,35 @@ def test_scalops():
     assert Matrix([[1, 2], [3, 4]]) // 2 == Matrix([[0, 1], [1, 2]])
     assert Matrix([[1, 2], [3, 4]]) / 0.5 == Matrix([[2, 4], [6, 8]])
 
+    assert Matrix([[1, 2], [3, 4]]) * Fraction(2) == Matrix([[2, 4], [6, 8]])
+    assert Fraction(2) * Matrix([[1, 2], [3, 4]]) == Matrix([[2, 4], [6, 8]])
+    assert Matrix([[1, 2], [3, 4]]) * Fraction(1, 2) == Matrix([[Fraction(1, 2), 1], [Fraction(3, 2), 2]])
+    assert Fraction(1, 2) * Matrix([[1, 2], [3, 4]]) == Matrix([[Fraction(1, 2), 1], [Fraction(3, 2), 2]])
+    assert Matrix([[1, 2], [3, 4]]) / Fraction(2) == Matrix([[Fraction(1, 2), 1], [Fraction(3, 2), 2]])
+    assert Matrix([[1, 2], [3, 4]]) / Fraction(1, 2) == Matrix([[2, 4], [6, 8]])
+
+    assert Matrix([[1, 2], [3, 4]]) + 0 == Matrix([[1, 2], [3, 4]])
+    assert 0 + Matrix([[1, 2], [3, 4]]) == Matrix([[1, 2], [3, 4]])
+    assert Matrix([[1, 2], [3, 4]]) + 1 == Matrix([[2, 3], [4, 5]])
+    assert Matrix([[1, 2], [3, 4]]) - 1 == Matrix([[0, 1], [2, 3]])
+    assert Matrix([[1, 2, 3], [4, 5, 6]]) + 0.3 == Matrix([[1.3, 2.3, 3.3], [4.3, 5.3, 6.3]])
+    assert 0.3 + Matrix([[1, 2, 3], [4, 5, 6]]) == Matrix([[1.3, 2.3, 3.3], [4.3, 5.3, 6.3]])
+    assert Matrix([[1, 2, 3], [4, 5, 6]]) - 0.3 == Matrix([[0.7, 1.7, 2.7], [3.7, 4.7, 5.7]])
+
+    assert Matrix([[1, 2], [3, 4]]) + Fraction() == Matrix([[1, 2], [3, 4]])
+    assert Fraction() + Matrix([[1, 2], [3, 4]]) == Matrix([[1, 2], [3, 4]])
+    assert Matrix([[1, 2], [3, 4]]) + Fraction(1) == Matrix([[2, 3], [4, 5]])
+    assert Matrix([[1, 2], [3, 4]]) - Fraction(1) == Matrix([[0, 1], [2, 3]])
+    assert Matrix([[1, 2, 3], [4, 5, 6]]) + Fraction(3, 10) == Matrix(
+        [[Fraction(13, 10), Fraction(23, 10), Fraction(33, 10)], [Fraction(43, 10), Fraction(53, 10), Fraction(63, 10)]]
+    )
+    assert Fraction(3, 10) + Matrix([[1, 2, 3], [4, 5, 6]]) == Matrix(
+        [[Fraction(13, 10), Fraction(23, 10), Fraction(33, 10)], [Fraction(43, 10), Fraction(53, 10), Fraction(63, 10)]]
+    )
+    assert Matrix([[1, 2, 3], [4, 5, 6]]) - Fraction(3, 10) == Matrix(
+        [[Fraction(7, 10), Fraction(17, 10), Fraction(27, 10)], [Fraction(37, 10), Fraction(47, 10), Fraction(57, 10)]]
+    )
+
 
 def test_matops():
     assert Matrix([[1, 2], [3, 4]]) + Matrix([[5, 6], [7, 8]]) == Matrix([[6, 8], [10, 12]])
@@ -521,16 +592,6 @@ def test_matops():
     assert Matrix([[1, 2], [3, 4]]) * Matrix([[5, 6], [7, 8]]) == Matrix([[5, 12], [21, 32]])
     assert Matrix([[1, 2], [3, 4]]) / Matrix([[2, 2], [2, 2]]) == Matrix([[0.5, 1.0], [1.5, 2.0]])
     assert Matrix([[1, 2], [3, 4]]) // Matrix([[2, 2], [2, 2]]) == Matrix([[0, 1], [1, 2]])
-
-
-def test_scalmatops():
-    assert Matrix([[1, 2], [3, 4]]) + 0 == Matrix([[1, 2], [3, 4]])
-    assert 0 + Matrix([[1, 2], [3, 4]]) == Matrix([[1, 2], [3, 4]])
-    assert Matrix([[1, 2], [3, 4]]) + 1 == Matrix([[2, 3], [4, 5]])
-    assert Matrix([[1, 2], [3, 4]]) - 1 == Matrix([[0, 1], [2, 3]])
-    assert Matrix([[1, 2, 3], [4, 5, 6]]) + 0.3 == Matrix([[1.3, 2.3, 3.3], [4.3, 5.3, 6.3]])
-    assert 0.3 + Matrix([[1, 2, 3], [4, 5, 6]]) == Matrix([[1.3, 2.3, 3.3], [4.3, 5.3, 6.3]])
-    assert Matrix([[1, 2, 3], [4, 5, 6]]) - 0.3 == Matrix([[0.7, 1.7, 2.7], [3.7, 4.7, 5.7]])
 
 
 def test_inplaceops():
@@ -565,6 +626,16 @@ def test_inplaceops():
     assert vec == Matrix.vec([0.0, -0.375, 0.75])
     vec @= Matrix([[1, 2, 3]])
     assert vec == Matrix([[0.0, 0.0, 0.0], [-0.375, -0.375 * 2, -0.375 * 3], [0.75, 0.75 * 2, 0.75 * 3]])
+
+    vec = Matrix.vec([1, 2, 3])
+    vec += Fraction(1)
+    assert vec == Matrix.vec([2, 3, 4])
+    vec -= Fraction(1)
+    assert vec == Matrix.vec([1, 2, 3])
+    vec *= Fraction(2)
+    assert vec == Matrix.vec([2, 4, 6])
+    vec /= Fraction(2)
+    assert vec == Matrix.vec([1, 2, 3])
 
 
 def test_rowcolmatops():
@@ -645,6 +716,24 @@ def test_rowcolmatinsert():
     assert mat == Matrix([[0, 50, 70], [50, 101, 30], [70, 102, 90]])
     mat.col[1] = mat.row[2]
     assert mat == Matrix([[0, 70, 70], [50, 102, 30], [70, 90, 90]])
+
+    mat = Matrix([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    mat.row[0] += Fraction(1)
+    assert mat == Matrix([[2, 3, 4], [4, 5, 6], [7, 8, 9]])
+    mat.row[0] -= Fraction(1)
+    assert mat == Matrix([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    mat.row[0] *= Fraction(2)
+    assert mat == Matrix([[2, 4, 6], [4, 5, 6], [7, 8, 9]])
+    mat.row[0] /= Fraction(2)
+    assert mat == Matrix([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    mat.col[0] += Fraction(1)
+    assert mat == Matrix([[2, 2, 3], [5, 5, 6], [8, 8, 9]])
+    mat.col[0] -= Fraction(1)
+    assert mat == Matrix([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    mat.col[0] *= Fraction(2)
+    assert mat == Matrix([[2, 2, 3], [8, 5, 6], [14, 8, 9]])
+    mat.col[0] /= Fraction(2)
+    assert mat == Matrix([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 
 
 def test_swap():

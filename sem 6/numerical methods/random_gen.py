@@ -3,11 +3,12 @@ import matrix
 import random
 import itertools
 import math
+from fractions import Fraction
 
 
 def generate_random_matrix(
     *, size=None, rows=None, cols=None, low=None, high=None, span: None | range = None, value_type=None
-) -> 'matrix.Matrix':
+) -> "matrix.Matrix":
     if size is not None and (rows is not None or cols is not None):
         assert False, "TODO: raise ValueError"
     if size is None and (rows is None or cols is None):
@@ -34,7 +35,7 @@ def generate_random_matrix(
         assert False, "TODO: raise ValueError"
 
     if span is not None:
-        return matrix.Matrix((random.choices(span, k=cols) for _ in range(rows)))
+        return matrix.Matrix((random.choices(span, k=cols) for _ in range(rows)), convert_to_fractions=False)
     if value_type is float:
         if low is None:
             low = 0.0
@@ -42,7 +43,10 @@ def generate_random_matrix(
             high = 1.0
         if low > high:
             assert False, "TODO: raise ValueError"
-        return matrix.Matrix((random.random() * (high - low) + low for _ in range(cols)) for _ in range(rows))
+        return matrix.Matrix(
+            ((random.random() * (high - low) + low for _ in range(cols)) for _ in range(rows)),
+            convert_to_fractions=False,
+        )
     if value_type is int:
         if high is None:
             high = 2**64
@@ -50,14 +54,16 @@ def generate_random_matrix(
             low = -(2**64)
         if low > high:
             assert False, "TODO: raise ValueError"
-        return matrix.Matrix((random.randint(low, high) for _ in range(cols)) for _ in range(rows))
+        return matrix.Matrix(
+            ((random.randint(low, high) for _ in range(cols)) for _ in range(rows)), convert_to_fractions=False
+        )
 
     assert False, "TODO: raise ValueError"
 
 
 def generate_random_upper_triangular_matrix(
     *, size=None, low=None, high=None, span: None | range = None, value_type=None
-) -> 'matrix.Matrix':
+) -> "matrix.Matrix":
     if span is not None and (low is not None or high is not None or value_type is not None):
         assert False, "TODO: raise ValueError"
     if value_type is None:
@@ -98,12 +104,14 @@ def generate_random_upper_triangular_matrix(
         linearized = (random.randint(low, high) for i in range(rows) for _ in range(cols - i))
     else:
         assert False, "TODO: raise ValueError"
-    return matrix.Matrix((next(linearized) if j >= i else 0 for j in range(cols)) for i in range(rows))
+    return matrix.Matrix(
+        ((next(linearized) if j >= i else 0 for j in range(cols)) for i in range(rows)), convert_to_fractions=False
+    )
 
 
 def generate_random_symmetric_matrix(
     *, size=None, low=None, high=None, span: None | range = None, value_type=None
-) -> 'matrix.Matrix':
+) -> "matrix.Matrix":
     m = generate_random_upper_triangular_matrix(size=size, low=low, high=high, span=span, value_type=value_type)
     for i in range(1, m.rows):
         for j in range(i):
@@ -113,14 +121,14 @@ def generate_random_symmetric_matrix(
 
 def generate_random_lower_triangular_matrix(
     *, size=None, low=None, high=None, span: None | range = None, value_type=None
-) -> 'matrix.Matrix':
+) -> "matrix.Matrix":
     m = generate_random_upper_triangular_matrix(size=size, low=low, high=high, span=span, value_type=value_type)
     return m.T
 
 
 def generate_random_diagonal_matrix(
     *, size=None, low=None, high=None, span: None | range = None, value_type=None
-) -> 'matrix.Matrix':
+) -> "matrix.Matrix":
     if span is not None and (low is not None or high is not None or value_type is not None):
         assert False, "TODO: raise ValueError"
     if value_type is None:
@@ -150,7 +158,7 @@ def generate_random_diagonal_matrix(
             high = 1.0
         if low > high:
             assert False, "TODO: raise ValueError"
-        linearized = (random.random() * (high - low) + low for i in range(rows))
+        linearized = (random.random() * (high - low) + low for _ in range(rows))
     elif value_type is int:
         if high is None:
             high = 2**64
@@ -161,19 +169,20 @@ def generate_random_diagonal_matrix(
         linearized = (random.randint(low, high) for i in range(rows))
     else:
         assert False, "TODO: raise ValueError"
-    return matrix.Matrix.diag(linearized)
+    return matrix.Matrix.diag(linearized, convert_to_fractions=False)
 
 
 def generate_mixed_matrix_with_known_determinant[T](
     *, size=None, low=None, high=None, span: None | range = None, value_type=None, swaps=100
-) -> 'tuple[matrix.Matrix, T]':
+) -> "tuple[matrix.Matrix, T]":
     m = generate_random_upper_triangular_matrix(size=size, low=low, high=high, span=span, value_type=value_type)
     det = math.prod(m[i, i] for i in range(m.cols))
     for _ in range(swaps):
         rows = random.randrange(2)
         i = random.randrange(m.rows)
         j = random.randrange(m.cols)
-        if i == j: continue
+        if i == j:
+            continue
         if rows:
             m.swap_rows(i, j)
         else:
@@ -194,19 +203,19 @@ def test_random_matrices():
             mat = generate_random_matrix(size=size, low=-1000, high=1000)
             assert all(-1000 <= mat[i, j] <= 1000 for i, j in itertools.product(range(size), repeat=2))
             assert mat.cols == mat.rows == size
-            assert mat.generic_type == int
+            assert mat.generic_type is int
         for rows, cols in itertools.product(range(1, 7), repeat=2):
             mat = generate_random_matrix(rows=rows, cols=cols, low=-1000, high=1000)
             assert all(-1000 <= mat[i, j] <= 1000 for i, j in itertools.product(range(rows), range(cols)))
             assert mat.cols == cols and mat.rows == rows
-            assert mat.generic_type == int
+            assert mat.generic_type is int
         for rows, cols in itertools.product(range(1, 4), repeat=2):
             low, high = random.randint(-(10**5), 10**5), random.randint(-(10**5), 10**5)
             low, high = min(low, high), max(low, high)
             mat = generate_random_matrix(rows=rows, cols=cols, low=low, high=high)
             assert all(low <= mat[i, j] <= high for i, j in itertools.product(range(rows), range(cols)))
             assert mat.cols == cols and mat.rows == rows
-            assert mat.generic_type == int
+            assert mat.generic_type is int
         for rows, cols in itertools.product(range(1, 4), repeat=2):
             mat = generate_random_matrix(rows=rows, cols=cols, low=-666, high=15.0)
             assert all(-666 <= mat[i, j] <= 15.0 for i, j in itertools.product(range(rows), range(cols)))
@@ -223,7 +232,7 @@ def test_random_matrices():
                 -100 <= mat[i, j] <= 200 and mat[i, j] % 5 == 0 for i, j in itertools.product(range(rows), range(cols))
             )
             assert mat.cols == cols and mat.rows == rows
-            assert mat.generic_type == int
+            assert mat.generic_type is int
 
     random.setstate(state)
 
@@ -240,7 +249,7 @@ def test_random_symmetric_matrices():
             mat = generate_random_symmetric_matrix(size=size, low=-1000, high=1000)
             assert all(-1000 <= mat[i, j] <= 1000 for i, j in itertools.product(range(size), repeat=2))
             assert mat.cols == mat.rows == size
-            assert mat.generic_type == int
+            assert mat.generic_type is int
             assert mat.is_symmetric()
         for size in range(1, 6):
             low, high = random.randint(-(10**5), 10**5), random.randint(-(10**5), 10**5)
@@ -248,7 +257,7 @@ def test_random_symmetric_matrices():
             mat = generate_random_symmetric_matrix(size=size, low=low, high=high)
             assert all(low <= mat[i, j] <= high for i, j in itertools.product(range(size), repeat=2))
             assert mat.cols == mat.rows == size
-            assert mat.generic_type == int
+            assert mat.generic_type is int
             assert mat.is_symmetric()
         for size in range(1, 6):
             mat = generate_random_symmetric_matrix(size=size, low=-666, high=15.0)
@@ -268,7 +277,7 @@ def test_random_symmetric_matrices():
                 -100 <= mat[i, j] <= 200 and mat[i, j] % 5 == 0 for i, j in itertools.product(range(size), repeat=2)
             )
             assert mat.cols == mat.rows == size
-            assert mat.generic_type == int
+            assert mat.generic_type is int
             assert mat.is_symmetric()
 
     random.setstate(state)
@@ -289,7 +298,7 @@ def test_random_upper_triangular_matrix():
                 for i, j in itertools.product(range(size), repeat=2)
             )
             assert mat.cols == mat.rows == size
-            assert mat.generic_type == int
+            assert mat.generic_type is int
             assert mat.is_upper_triangular()
         for size in range(1, 6):
             low, high = random.randint(-(10**5), 10**5), random.randint(-(10**5), 10**5)
@@ -300,7 +309,7 @@ def test_random_upper_triangular_matrix():
                 for i, j in itertools.product(range(size), repeat=2)
             )
             assert mat.cols == mat.rows == size
-            assert mat.generic_type == int
+            assert mat.generic_type is int
             assert mat.is_upper_triangular()
         for size in range(1, 6):
             mat = generate_random_upper_triangular_matrix(size=size, low=-666, high=15.0)
@@ -327,7 +336,7 @@ def test_random_upper_triangular_matrix():
                 for i, j in itertools.product(range(size), repeat=2)
             )
             assert mat.cols == mat.rows == size
-            assert mat.generic_type == int
+            assert mat.generic_type is int
             assert mat.is_upper_triangular()
 
     random.setstate(state)
@@ -348,7 +357,7 @@ def test_random_lower_triangular_matrix():
                 for i, j in itertools.product(range(size), repeat=2)
             )
             assert mat.cols == mat.rows == size
-            assert mat.generic_type == int
+            assert mat.generic_type is int
             assert mat.is_lower_triangular()
         for size in range(1, 6):
             low, high = random.randint(-(10**5), 10**5), random.randint(-(10**5), 10**5)
@@ -359,7 +368,7 @@ def test_random_lower_triangular_matrix():
                 for i, j in itertools.product(range(size), repeat=2)
             )
             assert mat.cols == mat.rows == size
-            assert mat.generic_type == int
+            assert mat.generic_type is int
             assert mat.is_lower_triangular()
         for size in range(1, 6):
             mat = generate_random_lower_triangular_matrix(size=size, low=-666, high=15.0)
@@ -386,7 +395,7 @@ def test_random_lower_triangular_matrix():
                 for i, j in itertools.product(range(size), repeat=2)
             )
             assert mat.cols == mat.rows == size
-            assert mat.generic_type == int
+            assert mat.generic_type is int
             assert mat.is_lower_triangular()
 
     random.setstate(state)
@@ -407,7 +416,7 @@ def test_random_diagonal_matrix():
                 for i, j in itertools.product(range(size), repeat=2)
             )
             assert mat.cols == mat.rows == size
-            assert mat.generic_type == int
+            assert mat.generic_type is int
             assert mat.is_diag()
         for size in range(1, 6):
             low, high = random.randint(-(10**5), 10**5), random.randint(-(10**5), 10**5)
@@ -418,7 +427,7 @@ def test_random_diagonal_matrix():
                 for i, j in itertools.product(range(size), repeat=2)
             )
             assert mat.cols == mat.rows == size
-            assert mat.generic_type == int
+            assert mat.generic_type is int
             assert mat.is_diag()
         for size in range(1, 6):
             mat = generate_random_diagonal_matrix(size=size, low=-666, high=15.0)
@@ -445,7 +454,7 @@ def test_random_diagonal_matrix():
                 for i, j in itertools.product(range(size), repeat=2)
             )
             assert mat.cols == mat.rows == size
-            assert mat.generic_type == int
+            assert mat.generic_type is int
             assert mat.is_diag()
 
     random.setstate(state)
