@@ -3,9 +3,9 @@ import copy
 import itertools
 
 
-class Matrix[T]:
-    def __init__(self, raw_matrix: Iterable[Iterable[T]]):
-        self.__raw: list[list[T]] = list(map(list, raw_matrix))
+class Matrix[U]:
+    def __init__(self, raw_matrix: Iterable[Iterable[U]]):
+        self.__raw: list[list[U]] = list(map(list, raw_matrix))
         if not self.__raw:
             assert False, "TODO: raise ValueError"
         self.__rows = len(self.__raw)
@@ -13,7 +13,7 @@ class Matrix[T]:
         if not all(len(row) == self.__cols for row in self.__raw):
             assert False, "TODO: raise ValueError"
 
-    def copy(self) -> "Matrix[T]":
+    def copy(self) -> "Matrix[U]":
         return Matrix(copy.deepcopy(self.__raw))
 
     @property
@@ -23,6 +23,10 @@ class Matrix[T]:
     @property
     def cols(self) -> int:
         return self.__cols
+
+    @property
+    def T(self) -> "Matrix[T]":
+        return Matrix(zip(*self.__raw))
 
     def __add__(self, other) -> "Matrix":
         if isinstance(other, Matrix):
@@ -79,7 +83,7 @@ class Matrix[T]:
             return Matrix(((v // other for v in row) for row in self.__raw))
         return NotImplemented
 
-    def __matmul__(self, other) -> "Matrix[T]":
+    def __matmul__(self, other) -> "Matrix[U]":
         if isinstance(other, Matrix):
             if self.cols != other.rows:
                 assert False, "TODO: raise ValueError"
@@ -89,7 +93,7 @@ class Matrix[T]:
             )
         return NotImplemented
 
-    def __getitem__(self, index: tuple[int, int]) -> T:
+    def __getitem__(self, index: tuple[int, int]) -> U:
         i, j = index
         if i not in range(self.rows) or j not in range(self.cols):
             assert False, "TODO: raise KeyError"
@@ -109,11 +113,11 @@ class Matrix[T]:
         return f'{'\n'.join(f'[{' '.join(str(v).ljust(max_spacing)for v in row)}]' for row in self.__raw)}'
 
     @staticmethod
-    def from_vec(vec: Iterable[T]) -> "Matrix[T]":
+    def from_vec(vec: Iterable[U]) -> "Matrix[U]":
         return Matrix([[v] for v in vec])
 
     @staticmethod
-    def zero(rows: int, cols: int) -> "Matrix[T]":
+    def zero(rows: int, cols: int) -> "Matrix[U]":
         return Matrix([[0] * cols for _ in range(rows)])
 
 
