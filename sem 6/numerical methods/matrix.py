@@ -390,6 +390,19 @@ class Matrix[U]:
         for k in range(self.rows):
             self[k, i], self[k, j] = self[k, j], self[k, i]
 
+    def cross_out(self, *, col=None, row=None) -> "Matrix[U]":
+        if col is None and row is None:
+            assert False, "TODO: raise ValueError"
+        if col is not None and col not in range(self.cols):
+            assert False, "TODO: raise ValueError"
+        if row is not None and row not in range(self.rows):
+            assert False, "TODO: raise ValueError"
+        if col is None:
+            return Matrix(self.row[i] for i in range(self.rows) if i != row)
+        if row is None:
+            return Matrix(self.col[j] for j in range(self.cols) if j != col).T
+        return Matrix((self[i, j] for j in range(self.cols) if j != col) for i in range(self.rows) if i != row)
+
     def is_unit(self) -> bool:
         cmp = self.__get_cmp(self.generic_type)
         return self.is_diag() and all(cmp(self[i, i], 1) for i in range(self.rows))
@@ -719,6 +732,7 @@ def test_positive_definiteness():
     assert not Matrix([[1, 2], [2, 1]]).is_positively_definite()
     assert not Matrix.diag([[-1, -1]]).is_positively_definite()
     assert not Matrix([[3, 2, 0], [2, 2, 2], [0, 2, 1]]).is_positively_definite()
+
 
 def test_crossoutmat():
     assert Matrix([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).cross_out(row=0, col=2) == Matrix([[4, 5], [7, 8]])
