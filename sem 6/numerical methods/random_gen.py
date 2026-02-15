@@ -258,6 +258,7 @@ def generate_random_vec[T](*, length=None, low=None, high=None, span: None | ran
 
 @dataclasses.dataclass(slots=True, frozen=True)
 class GeneratedLinearSystem:
+    _: dataclasses.KW_ONLY
     system: "matrix.Matrix"
     rhs: "matrix.Matrix"
     solution: "matrix.Matrix"
@@ -269,7 +270,7 @@ def generate_random_linear_system[T](
     system = generate_random_matrix(size=size, low=low, high=high, span=span, value_type=value_type)
     solution = generate_random_vec(length=size, low=low, high=high, span=span, value_type=value_type)
     rhs = system @ solution
-    return GeneratedLinearSystem(system, solution, rhs)
+    return GeneratedLinearSystem(system=system, solution=solution, rhs=rhs)
 
 
 def generate_random_unsolvable_linear_system[T](
@@ -278,7 +279,7 @@ def generate_random_unsolvable_linear_system[T](
     system = generate_random_singular_matrix(size=size, low=low, high=high, span=span, value_type=value_type)
     solution = generate_random_vec(length=size, low=low, high=high, span=span, value_type=value_type)
     rhs = system @ solution
-    return GeneratedLinearSystem(system, solution, rhs)
+    return GeneratedLinearSystem(system=system, rhs=rhs, solution=solution)
 
 
 def test_random_matrices():
