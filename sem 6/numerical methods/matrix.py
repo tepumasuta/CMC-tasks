@@ -363,6 +363,17 @@ class Matrix[U]:
         max_spacing = max(len(str(v)) for row in self.__raw for v in row)
         return f'{'\n'.join(f'[{' '.join(str(v).ljust(max_spacing)for v in row)}]' for row in self.__raw)}'
 
+    def swap_rows(self, i, j):
+        if i == j:
+            return
+        self.__raw[i], self.__raw[j] = self.__raw[j], self.__raw[i]
+
+    def swap_cols(self, i, j):
+        if i == j:
+            return
+        for k in range(self.rows):
+            self[k, i], self[k, j] = self[k, j], self[k, i]
+
     @staticmethod
     def vec(vec: Iterable[U]) -> "Matrix[U]":
         return Matrix([[v] for v in vec])
