@@ -202,7 +202,10 @@ class Matrix[U]:
             and self.rows == other.rows
             and (
                 all(self[i, j] == other[i, j] for i, j in itertools.product(range(self.rows), range(self.cols)))
-                if self.cols == 0 or not isinstance(self[0, 0], float)
+                if self.cols == 0
+                or not any(
+                    isinstance(self[i, j], float) for i, j in itertools.product(range(self.rows), range(self.cols))
+                )
                 else all(
                     math.isclose(self[i, j], other[i, j])
                     for i, j in itertools.product(range(self.rows), range(self.cols))
@@ -223,23 +226,39 @@ class Matrix[U]:
         return Matrix([[0] * cols for _ in range(rows)])
 
 
+def test_matrix_constructors():
+    assert Matrix([[1], [2], [3]]) == Matrix.from_vec([1, 2, 3])
+    assert Matrix.zero(1, 3) == Matrix([[0, 0, 0]])
+    assert Matrix.zero(3, 1) == Matrix.from_vec([0, 0, 0])
+    assert Matrix.zero(2, 2) == Matrix([[0, 0], [0, 0]])
+    assert Matrix.ones(1, 3) == Matrix([[1, 1, 1]])
+    assert Matrix.ones(3, 1) == Matrix.from_vec([1, 1, 1])
+    assert Matrix.ones(2, 2) == Matrix([[1, 1], [1, 1]])
+    assert Matrix.eye(1) == Matrix([[1]])
+    assert Matrix.eye(2) == Matrix([[1, 0], [0, 1]])
+    assert Matrix.eye(3) == Matrix([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+
+
+def test_matrix_conviniecnes():
+    assert Matrix([[1, 2], [3, 4]]).T == Matrix([[1, 3], [2, 4]])
+    assert Matrix.from_vec([1, 2, 3]).T == Matrix([[1, 2, 3]])
+    assert Matrix([[1, 2, 3], [4, 5, 6]]).T == Matrix([[1, 4], [2, 5], [3, 6]])
+
+
 def test_matmul():
     assert Matrix([[1, 2], [3, 4]]) @ Matrix([[5, 6], [7, 8]]) == Matrix([[19, 22], [43, 50]])
-    assert Matrix([[1, 2], [3, 4]]) @ Matrix([[1, 0], [0, 1]]) == Matrix([[1, 2], [3, 4]])
-    assert Matrix([[1, 0], [0, 1]]) @ Matrix([[1, 2], [3, 4]]) == Matrix([[1, 2], [3, 4]])
+    assert Matrix([[1, 2], [3, 4]]) @ Matrix.eye(2) == Matrix([[1, 2], [3, 4]])
+    assert Matrix.eye(2) @ Matrix([[1, 2], [3, 4]]) == Matrix([[1, 2], [3, 4]])
     assert Matrix([[1, 2], [3, 4]]) @ Matrix([[1], [0]]) == Matrix([[1], [3]])
     assert Matrix([[1, 2], [3, 4]]) @ Matrix([[0], [1]]) == Matrix([[2], [4]])
     assert Matrix([[1, 2, 3], [4, 5, 6]]) @ Matrix([[-1], [0], [1]]) == Matrix([[2], [2]])
 
 
-def test_scalmul():
+def test_scalops():
     assert Matrix([[1, 2], [3, 4]]) * 2 == Matrix([[2, 4], [6, 8]])
     assert 2 * Matrix([[1, 2], [3, 4]]) == Matrix([[2, 4], [6, 8]])
     assert Matrix([[1, 2], [3, 4]]) * 0.5 == Matrix([[0.5, 1], [1.5, 2]])
     assert 0.5 * Matrix([[1, 2], [3, 4]]) == Matrix([[0.5, 1], [1.5, 2]])
-
-
-def test_scaldiv():
     assert Matrix([[1, 2], [3, 4]]) / 2 == Matrix([[0.5, 1], [1.5, 2]])
     assert Matrix([[1, 2], [3, 4]]) // 2 == Matrix([[0, 1], [1, 2]])
     assert Matrix([[1, 2], [3, 4]]) / 0.5 == Matrix([[2, 4], [6, 8]])
@@ -247,9 +266,9 @@ def test_scaldiv():
 
 def test_matops():
     assert Matrix([[1, 2], [3, 4]]) + Matrix([[5, 6], [7, 8]]) == Matrix([[6, 8], [10, 12]])
-    assert Matrix([[1, 2], [3, 4]]) - Matrix([[1, 0], [0, 1]]) == Matrix([[0, 2], [3, 3]])
-    assert Matrix([[1, 2, 3], [4, 5, 6]]) + Matrix([[1, 1, 1], [1, 1, 1]]) == Matrix([[2, 3, 4], [5, 6, 7]])
-    assert Matrix([[1, 2, 3], [4, 5, 6]]) - Matrix([[1, 1, 1], [1, 1, 1]]) == Matrix([[0, 1, 2], [3, 4, 5]])
+    assert Matrix([[1, 2], [3, 4]]) - Matrix.eye(2) == Matrix([[0, 2], [3, 3]])
+    assert Matrix([[1, 2, 3], [4, 5, 6]]) + Matrix.ones(2, 3) == Matrix([[2, 3, 4], [5, 6, 7]])
+    assert Matrix([[1, 2, 3], [4, 5, 6]]) - Matrix.ones(2, 3) == Matrix([[0, 1, 2], [3, 4, 5]])
     assert Matrix([[1, 2], [3, 4]]) * Matrix([[5, 6], [7, 8]]) == Matrix([[5, 12], [21, 32]])
     assert Matrix([[1, 2], [3, 4]]) / Matrix([[2, 2], [2, 2]]) == Matrix([[0.5, 1.0], [1.5, 2.0]])
     assert Matrix([[1, 2], [3, 4]]) // Matrix([[2, 2], [2, 2]]) == Matrix([[0, 1], [1, 2]])
@@ -263,19 +282,6 @@ def test_scalmatops():
     assert Matrix([[1, 2, 3], [4, 5, 6]]) + 0.3 == Matrix([[1.3, 2.3, 3.3], [4.3, 5.3, 6.3]])
     assert 0.3 + Matrix([[1, 2, 3], [4, 5, 6]]) == Matrix([[1.3, 2.3, 3.3], [4.3, 5.3, 6.3]])
     assert Matrix([[1, 2, 3], [4, 5, 6]]) - 0.3 == Matrix([[0.7, 1.7, 2.7], [3.7, 4.7, 5.7]])
-
-
-def test_matrix_constructors():
-    assert Matrix([[1], [2], [3]]) == Matrix.from_vec([1, 2, 3])
-    assert Matrix.zero(1, 3) == Matrix([[0, 0, 0]])
-    assert Matrix.zero(3, 1) == Matrix.from_vec([0, 0, 0])
-    assert Matrix.zero(2, 2) == Matrix([[0, 0], [0, 0]])
-
-
-def test_matrix_conviniecnes():
-    assert Matrix([[1, 2], [3, 4]]).T == Matrix([[1, 3], [2, 4]])
-    assert Matrix.from_vec([1, 2, 3]).T == Matrix([[1, 2, 3]])
-    assert Matrix([[1, 2, 3], [4, 5, 6]]).T == Matrix([[1, 4], [2, 5], [3, 6]])
 
 
 def test_inplaceops():
@@ -310,3 +316,49 @@ def test_inplaceops():
     assert vec == Matrix.from_vec([0.0, -0.375, 0.75])
     vec @= Matrix([[1, 2, 3]])
     assert vec == Matrix([[0.0, 0.0, 0.0], [-0.375, -0.375 * 2, -0.375 * 3], [0.75, 0.75 * 2, 0.75 * 3]])
+
+
+def test_rowcolmatops():
+    mat = Matrix.ones(3, 3)
+    second_col = mat.col[1]
+    second_row = mat.row[1]
+    mat.col[1] *= 2
+    assert mat == Matrix([[1, 2, 1], [1, 2, 1], [1, 2, 1]])
+    assert list(second_col) == [2, 2, 2]
+    assert list(second_row) == [1, 2, 1]
+    mat.row[1] -= 1
+    assert mat == Matrix([[1, 2, 1], [0, 1, 0], [1, 2, 1]])
+    assert list(second_col) == [2, 1, 2]
+    assert list(second_row) == [0, 1, 0]
+    mat.row[0] *= -1
+    assert mat == Matrix([[-1, -2, -1], [0, 1, 0], [1, 2, 1]])
+    assert list(second_col) == [-2, 1, 2]
+    assert list(second_row) == [0, 1, 0]
+    mat.col[2] += 2
+    assert mat == Matrix([[-1, -2, 1], [0, 1, 2], [1, 2, 3]])
+    assert list(second_col) == [-2, 1, 2]
+    assert list(second_row) == [0, 1, 2]
+    mat.row[2] += 5
+    assert mat == Matrix([[-1, -2, 1], [0, 1, 2], [6, 7, 8]])
+    assert list(second_col) == [-2, 1, 7]
+    assert list(second_row) == [0, 1, 2]
+    mat.col[0] -= 1
+    assert mat == Matrix([[-2, -2, 1], [-1, 1, 2], [5, 7, 8]])
+    assert list(second_col) == [-2, 1, 7]
+    assert list(second_row) == [-1, 1, 2]
+    mat.col[1] //= 2
+    assert mat == Matrix([[-2, -1, 1], [-1, 0, 2], [5, 3, 8]])
+    assert list(second_col) == [-1, 0, 3]
+    assert list(second_row) == [-1, 0, 2]
+    mat.row[0] //= 2
+    assert mat == Matrix([[-1, 0, 0], [-1, 0, 2], [5, 3, 8]])
+    assert list(second_col) == [0, 0, 3]
+    assert list(second_row) == [-1, 0, 2]
+    mat.row[1] /= 2
+    assert mat == Matrix([[-1, 0, 0], [-1, 0, 2], [5, 3, 8]])
+    assert list(second_col) == [0, 0, 3]
+    assert list(second_row) == [-0.5, 0, 1]
+    mat.col[2] /= 2
+    assert mat == Matrix([[-1, -1, 0], [-0.5, 0.0, 0.5], [5, 3, 4]])
+    assert list(second_col) == [-1, 0.0, 3]
+    assert list(second_row) == [-0.5, 0.0, 0.5]
