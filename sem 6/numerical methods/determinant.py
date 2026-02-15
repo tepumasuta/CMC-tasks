@@ -25,9 +25,9 @@ class DeterminantStupid(Determinant):
 
 class DeterminantRecursive(Determinant):
     def calculate[T](self, mat: "matrix.Matrix[T]") -> T:
-        return self.rec(mat, size=mat.cols)
-
-    def rec[T](self, mat: "matrix.Matrix[T]", size: int) -> T: ...
+        if mat.cols == 1:
+            return mat[0, 0]
+        return sum((-1) ** i * self.calculate(mat.cross_out(row=0, col=i)) * mat[0, i] for i in range(mat.cols))
 
 
 def basic_test(determinant: Determinant):
