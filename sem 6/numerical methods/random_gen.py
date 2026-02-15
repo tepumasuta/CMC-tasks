@@ -54,6 +54,52 @@ def generate_random_matrix(
     assert False, "TODO: raise ValueError"
 
 
+def generate_random_upper_triangular_matrix(
+    *, size=None, low=None, high=None, span: None | range = None, value_type=None
+) -> Matrix:
+    if span is not None and (low is not None or high is not None or value_type is not None):
+        assert False, "TODO: raise ValueError"
+    if value_type is None:
+        t = type(low)
+        if t is type(None) or type(high) is float:
+            t = type(high)
+        value_type = t
+
+    # TODO: Make better check
+    # if low is not None and not issubclass(value_type, type(low)):
+    #     assert False, "TODO: raise ValueError"
+    # if high is not None and not issubclass(value_type, type(high)):
+    #     assert False, "TODO: raise ValueError"
+
+    cols = size
+    rows = size
+
+    if rows <= 0 or cols <= 0:
+        assert False, "TODO: raise ValueError"
+
+    if span is not None:
+        linearized = iter(random.choices(span, k=size * (size + 1) // 2))
+    elif value_type is float:
+        if low is None:
+            low = 0.0
+        if high is None:
+            high = 1.0
+        if low > high:
+            assert False, "TODO: raise ValueError"
+        linearized = (random.random() * (high - low) + low for i in range(rows) for _ in range(cols - i))
+    elif value_type is int:
+        if high is None:
+            high = 2**64
+        if low is None:
+            low = -(2**64)
+        if low > high:
+            assert False, "TODO: raise ValueError"
+        linearized = (random.randint(low, high) for i in range(rows) for _ in range(cols - i))
+    else:
+        assert False, "TODO: raise ValueError"
+    return Matrix((next(linearized) if j >= i else 0 for j in range(cols)) for i in range(rows))
+
+
 def test_random_matrices():
     seeds = random.choices(range(2_781_443_143_657_574), k=10**5)
     state = random.getstate()
