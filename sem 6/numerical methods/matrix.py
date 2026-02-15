@@ -225,6 +225,10 @@ class Matrix[U]:
     def zero(rows: int, cols: int) -> "Matrix[U]":
         return Matrix([[0] * cols for _ in range(rows)])
 
+    @staticmethod
+    def ones(rows: int, cols: int) -> "Matrix[U]":
+        return Matrix([[1] * cols for _ in range(rows)])
+
 
 def test_matrix_constructors():
     assert Matrix([[1], [2], [3]]) == Matrix.from_vec([1, 2, 3])
@@ -237,6 +241,10 @@ def test_matrix_constructors():
     assert Matrix.eye(1) == Matrix([[1]])
     assert Matrix.eye(2) == Matrix([[1, 0], [0, 1]])
     assert Matrix.eye(3) == Matrix([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    assert Matrix.eye(3) == Matrix.diag([1, 1, 1])
+    assert Matrix.diag([1, 2, 3]) == Matrix([[1, 0, 0], [0, 2, 0], [0, 0, 3]])
+    assert Matrix.diag([42, 69]) == Matrix([[42, 0], [0, 69]])
+    assert Matrix.diag([777]) == Matrix([[777]])
 
 
 def test_matrix_conviniecnes():
