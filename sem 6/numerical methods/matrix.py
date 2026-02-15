@@ -218,7 +218,7 @@ class Matrix[U]:
         return f'{'\n'.join(f'[{' '.join(str(v).ljust(max_spacing)for v in row)}]' for row in self.__raw)}'
 
     @staticmethod
-    def from_vec(vec: Iterable[U]) -> "Matrix[U]":
+    def vec(vec: Iterable[U]) -> "Matrix[U]":
         return Matrix([[v] for v in vec])
 
     @staticmethod
@@ -229,14 +229,23 @@ class Matrix[U]:
     def ones(rows: int, cols: int) -> "Matrix[U]":
         return Matrix([[1] * cols for _ in range(rows)])
 
+    @staticmethod
+    def diag(vec: Iterable[U]) -> "Matrix[U]":
+        vec = tuple(vec)
+        return Matrix((0,) * i + (v,) + (0,) * (len(vec) - i - 1) for i, v in enumerate(vec))
+
+    @staticmethod
+    def eye(size: int) -> "Matrix[U]":
+        return Matrix.diag((1,) * size)
+
 
 def test_matrix_constructors():
-    assert Matrix([[1], [2], [3]]) == Matrix.from_vec([1, 2, 3])
+    assert Matrix([[1], [2], [3]]) == Matrix.vec([1, 2, 3])
     assert Matrix.zero(1, 3) == Matrix([[0, 0, 0]])
-    assert Matrix.zero(3, 1) == Matrix.from_vec([0, 0, 0])
+    assert Matrix.zero(3, 1) == Matrix.vec([0, 0, 0])
     assert Matrix.zero(2, 2) == Matrix([[0, 0], [0, 0]])
     assert Matrix.ones(1, 3) == Matrix([[1, 1, 1]])
-    assert Matrix.ones(3, 1) == Matrix.from_vec([1, 1, 1])
+    assert Matrix.ones(3, 1) == Matrix.vec([1, 1, 1])
     assert Matrix.ones(2, 2) == Matrix([[1, 1], [1, 1]])
     assert Matrix.eye(1) == Matrix([[1]])
     assert Matrix.eye(2) == Matrix([[1, 0], [0, 1]])
@@ -249,7 +258,7 @@ def test_matrix_constructors():
 
 def test_matrix_conviniecnes():
     assert Matrix([[1, 2], [3, 4]]).T == Matrix([[1, 3], [2, 4]])
-    assert Matrix.from_vec([1, 2, 3]).T == Matrix([[1, 2, 3]])
+    assert Matrix.vec([1, 2, 3]).T == Matrix([[1, 2, 3]])
     assert Matrix([[1, 2, 3], [4, 5, 6]]).T == Matrix([[1, 4], [2, 5], [3, 6]])
 
 
@@ -293,35 +302,35 @@ def test_scalmatops():
 
 
 def test_inplaceops():
-    vec = Matrix.from_vec([1, 2, 3])
+    vec = Matrix.vec([1, 2, 3])
     vec += vec
-    assert vec == Matrix.from_vec([2, 4, 6])
+    assert vec == Matrix.vec([2, 4, 6])
     vec //= 2
-    assert vec == Matrix.from_vec([1, 2, 3])
+    assert vec == Matrix.vec([1, 2, 3])
     vec *= 3
-    assert vec == Matrix.from_vec([3, 6, 9])
+    assert vec == Matrix.vec([3, 6, 9])
     vec /= 1.5
-    assert vec == Matrix.from_vec([2, 4, 6])
+    assert vec == Matrix.vec([2, 4, 6])
     vec -= vec
     assert vec == Matrix.zero(3, 1)
     vec += 1
-    assert vec == Matrix.from_vec([1, 1, 1])
-    vec *= Matrix.from_vec([1, 2, 3])
-    assert vec == Matrix.from_vec([1, 2, 3])
+    assert vec == Matrix.vec([1, 1, 1])
+    vec *= Matrix.vec([1, 2, 3])
+    assert vec == Matrix.vec([1, 2, 3])
     vec //= vec
-    assert vec == Matrix.from_vec([1, 1, 1])
-    vec /= Matrix.from_vec([1, 2, 0.5])
-    assert vec == Matrix.from_vec([1, 0.5, 2])
+    assert vec == Matrix.vec([1, 1, 1])
+    vec /= Matrix.vec([1, 2, 0.5])
+    assert vec == Matrix.vec([1, 0.5, 2])
     vec += 2.5
-    assert vec == Matrix.from_vec([3.5, 3.0, 4.5])
+    assert vec == Matrix.vec([3.5, 3.0, 4.5])
     vec -= 2
-    assert vec == Matrix.from_vec([1.5, 1.0, 2.5])
+    assert vec == Matrix.vec([1.5, 1.0, 2.5])
     vec -= 1.5
-    assert vec == Matrix.from_vec([0.0, -0.5, 1.0])
+    assert vec == Matrix.vec([0.0, -0.5, 1.0])
     vec *= 1.5
-    assert vec == Matrix.from_vec([0.0, -0.75, 1.5])
+    assert vec == Matrix.vec([0.0, -0.75, 1.5])
     vec /= 2
-    assert vec == Matrix.from_vec([0.0, -0.375, 0.75])
+    assert vec == Matrix.vec([0.0, -0.375, 0.75])
     vec @= Matrix([[1, 2, 3]])
     assert vec == Matrix([[0.0, 0.0, 0.0], [-0.375, -0.375 * 2, -0.375 * 3], [0.75, 0.75 * 2, 0.75 * 3]])
 
