@@ -24,6 +24,18 @@ class Matrix[T]:
     def cols(self) -> int:
         return self.__cols
 
+    def __add__(self, other) -> "Matrix":
+        if isinstance(other, Matrix):
+            if self.cols != other.cols or self.rows != other.rows:
+                assert False, "TODO: raise ValueError"
+            return Matrix(((self[i, j] + other[i, j] for j in range(self.cols)) for i in range(self.rows)))
+
+    def __sub__(self, other) -> "Matrix":
+        if isinstance(other, Matrix):
+            if self.cols != other.cols or self.rows != other.rows:
+                assert False, "TODO: raise ValueError"
+            return Matrix(((self[i, j] - other[i, j] for j in range(self.cols)) for i in range(self.rows)))
+
     def __mul__(self, other) -> "Matrix":
         if isinstance(other, Matrix):
             if self.cols != other.rows:
