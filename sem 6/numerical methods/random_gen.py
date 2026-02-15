@@ -100,6 +100,16 @@ def generate_random_upper_triangular_matrix(
     return Matrix((next(linearized) if j >= i else 0 for j in range(cols)) for i in range(rows))
 
 
+def generate_random_symmetric_matrix(
+    *, size=None, low=None, high=None, span: None | range = None, value_type=None
+) -> Matrix:
+    m = generate_random_upper_triangular_matrix(size=size, low=low, high=high, span=span, value_type=value_type)
+    for i in range(1, m.rows):
+        for j in range(i):
+            m[i, j] = m[j, i]
+    return m
+
+
 def test_random_matrices():
     seeds = random.choices(range(2_781_443_143_657_574), k=10**5)
     state = random.getstate()
