@@ -1,9 +1,12 @@
 import matrix
 
+import dataclasses
 import random
 import itertools
 import math
 from fractions import Fraction
+
+# TODO: Refactor into element params or so
 
 
 def generate_random_matrix(
@@ -235,7 +238,20 @@ def generate_random_vec[T](*, length=None, low=None, high=None, span: None | ran
     return matrix.Matrix.vec(linearized, convert_to_fractions=False)
 
 
-# def generate_random_linear_system[T](size: int, )
+@dataclasses.dataclass(slots=True, frozen=True)
+class GeneratedLinearSystem:
+    system: "matrix.Matrix"
+    rhs: "matrix.Matrix"
+    solution: "matrix.Matrix"
+
+
+def generate_random_linear_system[T](
+    *, size: int, low=None, high=None, span: None | range = None, value_type=None
+) -> GeneratedLinearSystem:
+    system = generate_random_matrix(size=size, low=low, high=high, span=span, value_type=value_type)
+    solution = generate_random_vec(length=size, low=low, high=high, span=span, value_type=value_type)
+    rhs = system @ solution
+    return GeneratedLinearSystem(system, solution, rhs)
 
 
 def test_random_matrices():
