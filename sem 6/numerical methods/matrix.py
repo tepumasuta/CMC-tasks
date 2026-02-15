@@ -29,6 +29,13 @@ class Matrix[T]:
             if self.cols != other.cols or self.rows != other.rows:
                 assert False, "TODO: raise ValueError"
             return Matrix(((self[i, j] + other[i, j] for j in range(self.cols)) for i in range(self.rows)))
+        if isinstance(other, (int, float)):
+            return Matrix(((self[i, j] + other for j in range(self.cols)) for i in range(self.rows)))
+        return NotImplemented
+
+    def __radd__(self, other) -> "Matrix":
+        if isinstance(other, (int, float)):
+            return self.__add__(other)
         return NotImplemented
 
     def __sub__(self, other) -> "Matrix":
@@ -36,6 +43,8 @@ class Matrix[T]:
             if self.cols != other.cols or self.rows != other.rows:
                 assert False, "TODO: raise ValueError"
             return Matrix(((self[i, j] - other[i, j] for j in range(self.cols)) for i in range(self.rows)))
+        if isinstance(other, (int, float)):
+            return Matrix(((self[i, j] - other for j in range(self.cols)) for i in range(self.rows)))
         return NotImplemented
 
     def __mul__(self, other) -> "Matrix":
