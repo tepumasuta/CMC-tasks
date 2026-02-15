@@ -33,12 +33,24 @@ class Matrix[T]:
                 for i in range(self.rows)
             )
         if isinstance(other, (int, float)):
-            return Matrix([[v * other for v in row] for row in self.__raw])
+            return Matrix(((v * other for v in row) for row in self.__raw))
         return NotImplemented
 
     def __rmul__(self, other) -> "Matrix":
         if isinstance(other, (int, float)):
             return self.__mul__(other)
+        return NotImplemented
+
+    def __truediv__(self, other) -> "Matrix":
+        if isinstance(other, (int, float)):
+            return Matrix(((v / other for v in row) for row in self.__raw))
+
+        return NotImplemented
+
+    def __floordiv__(self, other) -> "Matrix":
+        if isinstance(other, int):
+            return Matrix(((v // other for v in row) for row in self.__raw))
+
         return NotImplemented
 
     def __getitem__(self, index: tuple[int, int]) -> T:
