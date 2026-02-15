@@ -259,3 +259,61 @@ def test_random_upper_triangular_matrix():
             assert mat.is_upper_triangular()
 
     random.setstate(state)
+
+def test_random_lower_triangular_matrix():
+    seeds = random.choices(range(2_781_443_143_657_574), k=10**5)
+    state = random.getstate()
+
+    seeds_iter = iter(seeds)
+
+    for _, seed in zip(range(1000), seeds_iter):
+        random.seed(seed)
+        for size in range(1, 6):
+            mat = generate_random_lower_triangular_matrix(size=size, low=-1000, high=1000)
+            assert all(
+                -1000 <= mat[i, j] <= 1000 if j >= i else mat[i, j] == 0
+                for i, j in itertools.product(range(size), repeat=2)
+            )
+            assert mat.cols == mat.rows == size
+            assert mat.generic_type == int
+            assert mat.is_lower_triangular()
+        for size in range(1, 6):
+            low, high = random.randint(-(10**5), 10**5), random.randint(-(10**5), 10**5)
+            low, high = min(low, high), max(low, high)
+            mat = generate_random_lower_triangular_matrix(size=size, low=low, high=high)
+            assert all(
+                low <= mat[i, j] <= high if j >= i else mat[i, j] == 0
+                for i, j in itertools.product(range(size), repeat=2)
+            )
+            assert mat.cols == mat.rows == size
+            assert mat.generic_type == int
+            assert mat.is_lower_triangular()
+        for size in range(1, 6):
+            mat = generate_random_lower_triangular_matrix(size=size, low=-666, high=15.0)
+            assert all(
+                -666 <= mat[i, j] <= 15.0 if j >= i else mat[i, j] == 0
+                for i, j in itertools.product(range(size), repeat=2)
+            )
+            assert mat.cols == mat.rows == size
+            assert mat.generic_type == float
+            assert mat.is_lower_triangular()
+        for size in range(1, 6):
+            mat = generate_random_lower_triangular_matrix(size=size, value_type=float)
+            assert all(
+                0.0 <= mat[i, j] <= 1.0 if j >= i else mat[i, j] == 0
+                for i, j in itertools.product(range(size), repeat=2)
+            )
+            assert mat.cols == mat.rows == size
+            assert mat.generic_type == float
+            assert mat.is_lower_triangular()
+        for size in range(1, 6):
+            mat = generate_random_lower_triangular_matrix(size=size, span=range(-100, 200, 5))
+            assert all(
+                -100 <= mat[i, j] <= 200 and mat[i, j] % 5 == 0 if j >= i else mat[i, j] == 0
+                for i, j in itertools.product(range(size), repeat=2)
+            )
+            assert mat.cols == mat.rows == size
+            assert mat.generic_type == int
+            assert mat.is_lower_triangular()
+
+    random.setstate(state)
