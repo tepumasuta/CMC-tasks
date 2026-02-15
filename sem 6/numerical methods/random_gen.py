@@ -1,4 +1,4 @@
-from matrix import Matrix
+import matrix
 
 import random
 import itertools
@@ -7,7 +7,7 @@ import math
 
 def generate_random_matrix(
     *, size=None, rows=None, cols=None, low=None, high=None, span: None | range = None, value_type=None
-) -> Matrix:
+) -> 'matrix.Matrix':
     if size is not None and (rows is not None or cols is not None):
         assert False, "TODO: raise ValueError"
     if size is None and (rows is None or cols is None):
@@ -34,7 +34,7 @@ def generate_random_matrix(
         assert False, "TODO: raise ValueError"
 
     if span is not None:
-        return Matrix((random.choices(span, k=cols) for _ in range(rows)))
+        return matrix.Matrix((random.choices(span, k=cols) for _ in range(rows)))
     if value_type is float:
         if low is None:
             low = 0.0
@@ -42,7 +42,7 @@ def generate_random_matrix(
             high = 1.0
         if low > high:
             assert False, "TODO: raise ValueError"
-        return Matrix((random.random() * (high - low) + low for _ in range(cols)) for _ in range(rows))
+        return matrix.Matrix((random.random() * (high - low) + low for _ in range(cols)) for _ in range(rows))
     if value_type is int:
         if high is None:
             high = 2**64
@@ -50,14 +50,14 @@ def generate_random_matrix(
             low = -(2**64)
         if low > high:
             assert False, "TODO: raise ValueError"
-        return Matrix((random.randint(low, high) for _ in range(cols)) for _ in range(rows))
+        return matrix.Matrix((random.randint(low, high) for _ in range(cols)) for _ in range(rows))
 
     assert False, "TODO: raise ValueError"
 
 
 def generate_random_upper_triangular_matrix(
     *, size=None, low=None, high=None, span: None | range = None, value_type=None
-) -> Matrix:
+) -> 'matrix.Matrix':
     if span is not None and (low is not None or high is not None or value_type is not None):
         assert False, "TODO: raise ValueError"
     if value_type is None:
@@ -98,12 +98,12 @@ def generate_random_upper_triangular_matrix(
         linearized = (random.randint(low, high) for i in range(rows) for _ in range(cols - i))
     else:
         assert False, "TODO: raise ValueError"
-    return Matrix((next(linearized) if j >= i else 0 for j in range(cols)) for i in range(rows))
+    return matrix.Matrix((next(linearized) if j >= i else 0 for j in range(cols)) for i in range(rows))
 
 
 def generate_random_symmetric_matrix(
     *, size=None, low=None, high=None, span: None | range = None, value_type=None
-) -> Matrix:
+) -> 'matrix.Matrix':
     m = generate_random_upper_triangular_matrix(size=size, low=low, high=high, span=span, value_type=value_type)
     for i in range(1, m.rows):
         for j in range(i):
@@ -113,14 +113,14 @@ def generate_random_symmetric_matrix(
 
 def generate_random_lower_triangular_matrix(
     *, size=None, low=None, high=None, span: None | range = None, value_type=None
-) -> Matrix:
+) -> 'matrix.Matrix':
     m = generate_random_upper_triangular_matrix(size=size, low=low, high=high, span=span, value_type=value_type)
     return m.T
 
 
 def generate_random_diagonal_matrix(
     *, size=None, low=None, high=None, span: None | range = None, value_type=None
-) -> Matrix:
+) -> 'matrix.Matrix':
     if span is not None and (low is not None or high is not None or value_type is not None):
         assert False, "TODO: raise ValueError"
     if value_type is None:
@@ -161,12 +161,12 @@ def generate_random_diagonal_matrix(
         linearized = (random.randint(low, high) for i in range(rows))
     else:
         assert False, "TODO: raise ValueError"
-    return Matrix.diag(linearized)
+    return matrix.Matrix.diag(linearized)
 
 
 def generate_mixed_matrix_with_known_determinant[T](
     *, size=None, low=None, high=None, span: None | range = None, value_type=None, swaps=100
-) -> tuple[Matrix, T]:
+) -> 'tuple[matrix.Matrix, T]':
     m = generate_random_upper_triangular_matrix(size=size, low=low, high=high, span=span, value_type=value_type)
     det = math.prod(m[i, i] for i in range(m.cols))
     for _ in range(swaps):

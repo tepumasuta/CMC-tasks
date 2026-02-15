@@ -1,4 +1,4 @@
-from matrix import Matrix
+import matrix
 import random_gen
 
 from typing import Iterable
@@ -9,11 +9,11 @@ import abc
 
 class Determinant(abc.ABC):
     @abc.abstractmethod
-    def calculate[T](self, mat: Matrix[T]) -> T: ...
+    def calculate[T](self, mat: "matrix.Matrix[T]") -> T: ...
 
 
 class DeterminantStupid(Determinant):
-    def calculate[T](self, mat: Matrix[T]) -> T:
+    def calculate[T](self, mat: "matrix.Matrix[T]") -> T:
         return sum(
             self.signum(perm) * math.prod(mat[i, v] for i, v in enumerate(perm))
             for perm in itertools.permutations(range(mat.rows))
@@ -24,16 +24,16 @@ class DeterminantStupid(Determinant):
 
 
 class DeterminantRecursive(Determinant):
-    def calculate[T](self, mat: Matrix[T]) -> T:
+    def calculate[T](self, mat: "matrix.Matrix[T]") -> T:
         return self.rec(mat, size=mat.cols)
 
-    def rec[T](self, mat: Matrix[T], size: int) -> T: ...
+    def rec[T](self, mat: "matrix.Matrix[T]", size: int) -> T: ...
 
 
 def basic_test(determinant: Determinant):
-    assert Matrix.eye(3).det(determinant) == 1
-    assert Matrix.eye(2).det(determinant) == 1
-    assert Matrix.eye(1).det(determinant) == 1
+    assert matrix.Matrix.eye(3).det(determinant) == 1
+    assert matrix.Matrix.eye(2).det(determinant) == 1
+    assert matrix.Matrix.eye(1).det(determinant) == 1
 
     for _ in range(10):
         diag = random_gen.generate_random_diagonal_matrix(size=5, low=1, value_type=int)

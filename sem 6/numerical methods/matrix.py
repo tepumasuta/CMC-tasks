@@ -177,7 +177,7 @@ class Matrix[U]:
     def col(self) -> ColsView:
         return Matrix.ColsView(self)
 
-    def det(self, alg: "determinant.Determinant | None" = None) -> int:
+    def det(self, alg: "determinant.Determinant | None" = None) -> U:
         if self.cols != self.rows:
             assert False, "TODO: raise ValueError"
         if alg is None:
@@ -719,3 +719,8 @@ def test_positive_definiteness():
     assert not Matrix([[1, 2], [2, 1]]).is_positively_definite()
     assert not Matrix.diag([[-1, -1]]).is_positively_definite()
     assert not Matrix([[3, 2, 0], [2, 2, 2], [0, 2, 1]]).is_positively_definite()
+
+def test_crossoutmat():
+    assert Matrix([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).cross_out(row=0, col=2) == Matrix([[4, 5], [7, 8]])
+    assert Matrix([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).cross_out(row=0, col=2) == Matrix([[4, 5], [7, 8]])
+    assert Matrix([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).cross_out(col=0) == Matrix([[2, 3], [5, 6], [8, 9]])
