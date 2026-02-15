@@ -512,6 +512,10 @@ class Matrix[U]:
     def eye(size: int, *, convert_to_fractions=True) -> "Matrix[U]":
         return Matrix.diag((1,) * size, convert_to_fractions=convert_to_fractions)
 
+    @staticmethod
+    def from_mat(other: "Matrix[U]", *, convert_to_fractions=True) -> "Matrix[U]":
+        return Matrix(other.__raw, convert_to_fractions=convert_to_fractions)
+
 
 def test_matrix_constructors():
     assert Matrix([[1], [2], [3]]) == Matrix.vec([1, 2, 3])
@@ -528,6 +532,11 @@ def test_matrix_constructors():
     assert Matrix.diag([1, 2, 3]) == Matrix([[1, 0, 0], [0, 2, 0], [0, 0, 3]])
     assert Matrix.diag([42, 69]) == Matrix([[42, 0], [0, 69]])
     assert Matrix.diag([777]) == Matrix([[777]])
+    assert Matrix.from_mat(Matrix([[1, 2], [3, 4]])) == Matrix([[1, 2], [3, 4]])
+    mat = Matrix([[1, 2], [3, 4]])
+    cp = mat.from_mat(mat)
+    mat.row[0] *= 666
+    assert cp == Matrix([[1, 2], [3, 4]]) != mat
 
 
 def test_matrix_conviniecnes():
