@@ -96,6 +96,10 @@ class Matrix[T]:
         max_spacing = max(len(str(v)) for row in self.__raw for v in row)
         return f'{'\n'.join(f'[{' '.join(str(v).ljust(max_spacing)for v in row)}]' for row in self.__raw)}'
 
+    @staticmethod
+    def from_vec(vec: Iterable[T]) -> "Matrix[T]":
+        return Matrix([[v] for v in vec])
+
 
 def test_matmul():
     assert Matrix([[1, 2], [3, 4]]) @ Matrix([[5, 6], [7, 8]]) == Matrix([[19, 22], [43, 50]])
