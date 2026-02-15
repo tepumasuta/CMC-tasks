@@ -1,10 +1,142 @@
+from collections.abc import Sized
 from typing import Iterable
 import copy
 import itertools
 import math
+import weakref
 
 
 class Matrix[U]:
+    class Row:
+        def __init__(self, mat: "weakref.ProxyType[Matrix[U]]", index: int):
+            self.mat: Matrix[U] = mat
+            self.index = index
+
+        def __len__(self) -> int:
+            return self.mat.cols
+
+        def __iter__(self) -> Iterable[U]:
+            yield from (self.mat[self.index, j] for j in range(self.mat.cols))
+
+        def __iadd__(self, other):
+            if isinstance(other, (int, float)):
+                for j in range(self.mat.cols):
+                    self.mat[self.index, j] += other
+                return self
+            return NotImplemented
+
+        def __isub__(self, other):
+            if isinstance(other, (int, float)):
+                for j in range(self.mat.cols):
+                    self.mat[self.index, j] -= other
+                return self
+            return NotImplemented
+
+        def __imul__(self, other):
+            if isinstance(other, (int, float)):
+                for j in range(self.mat.cols):
+                    self.mat[self.index, j] *= other
+                return self
+            return NotImplemented
+
+        def __itruediv__(self, other):
+            if isinstance(other, (int, float)):
+                for j in range(self.mat.cols):
+                    self.mat[self.index, j] /= other
+                return self
+            return NotImplemented
+
+        def __ifloordiv__(self, other):
+            if isinstance(other, (int, float)):
+                for j in range(self.mat.cols):
+                    self.mat[self.index, j] //= other
+                return self
+            return NotImplemented
+
+    class Col:
+        def __init__(self, mat: "weakref.ProxyType[Matrix[U]]", index: int):
+            self.mat: Matrix[U] = mat
+            self.index = index
+
+        def __len__(self) -> int:
+            return self.mat.rows
+
+        def __iter__(self) -> Iterable[U]:
+            yield from (self.mat[i, self.index] for i in range(self.mat.rows))
+
+        def __iadd__(self, other):
+            if isinstance(other, (int, float)):
+                for i in range(self.mat.rows):
+                    self.mat[i, self.index] += other
+                return self
+            return NotImplemented
+
+        def __isub__(self, other):
+            if isinstance(other, (int, float)):
+                for i in range(self.mat.rows):
+                    self.mat[i, self.index] -= other
+                return self
+            return NotImplemented
+
+        def __imul__(self, other):
+            if isinstance(other, (int, float)):
+                for i in range(self.mat.rows):
+                    self.mat[i, self.index] *= other
+                return self
+            return NotImplemented
+
+        def __itruediv__(self, other):
+            if isinstance(other, (int, float)):
+                for i in range(self.mat.rows):
+                    self.mat[i, self.index] /= other
+                return self
+            return NotImplemented
+
+        def __ifloordiv__(self, other):
+            if isinstance(other, (int, float)):
+                for i in range(self.mat.rows):
+                    self.mat[i, self.index] //= other
+                return self
+            return NotImplemented
+
+    class RowsView:
+        def __init__(self, mat: "Matrix"):
+            self.base = weakref.proxy(mat)
+
+        def __getitem__(self, index) -> "Matrix.Row":
+            if isinstance(index, int):
+                return Matrix.Row(self.base, index)
+            assert False, "TODO: raise KeyError"
+
+        def __setitem__(self, index, value: Iterable[U]):
+            if isinstance(value, Matrix.Row) and value.index == index:
+                return
+            if not isinstance(value, Sized):
+                value = tuple(value)
+            if self.base.rows != len(value):
+                assert False, "TODO: raise ValueError"
+            for j, v in enumerate(value):
+                self.base[index, j] = v
+
+    class ColsView:
+        def __init__(self, mat: "Matrix"):
+            self.base: Matrix = weakref.proxy(mat)
+
+        def __getitem__(self, index) -> "Matrix.Col":
+            if isinstance(index, int):
+                return Matrix.Col(self.base, index)
+            assert False, "TODO: raise KeyError"
+
+        def __setitem__(self, index, value: Iterable[U]):
+            if isinstance(value, Matrix.Col) and value.index == index:
+                return
+            if not isinstance(value, Sized):
+                value = tuple(value)
+            if self.base.rows != len(value):
+                assert False, "TODO: raise ValueError"
+            for i, v in enumerate(value):
+                self.base[i, index] = v
+
     def __init__(self, raw_matrix: Iterable[Iterable[U]]):
         self.__raw: list[list[U]] = list(map(list, raw_matrix))
         if not self.__raw:
@@ -28,6 +160,14 @@ class Matrix[U]:
     @property
     def T(self) -> "Matrix[T]":
         return Matrix(zip(*self.__raw))
+
+    @property
+    def row(self) -> RowsView:
+        return Matrix.RowsView(self)
+
+    @property
+    def col(self) -> ColsView:
+        return Matrix.ColsView(self)
 
     def __add__(self, other) -> "Matrix":
         if isinstance(other, Matrix):
@@ -193,6 +333,12 @@ class Matrix[U]:
         if i not in range(self.rows) or j not in range(self.cols):
             assert False, "TODO: raise KeyError"
         return self.__raw[i][j]
+
+    def __setitem__(self, index: tuple[int, int], value) -> U:
+        i, j = index
+        if i not in range(self.rows) or j not in range(self.cols):
+            assert False, "TODO: raise KeyError"
+        self.__raw[i][j] = value
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, Matrix):
@@ -368,12 +514,12 @@ def test_rowcolmatops():
     assert list(second_col) == [-1, 0, 3]
     assert list(second_row) == [-1, 0, 2]
     mat.row[0] //= 2
-    assert mat == Matrix([[-1, 0, 0], [-1, 0, 2], [5, 3, 8]])
-    assert list(second_col) == [0, 0, 3]
+    assert mat == Matrix([[-1, -1, 0], [-1, 0, 2], [5, 3, 8]])
+    assert list(second_col) == [-1, 0, 3]
     assert list(second_row) == [-1, 0, 2]
     mat.row[1] /= 2
-    assert mat == Matrix([[-1, 0, 0], [-1, 0, 2], [5, 3, 8]])
-    assert list(second_col) == [0, 0, 3]
+    assert mat == Matrix([[-1, -1, 0], [-0.5, 0, 1], [5, 3, 8]])
+    assert list(second_col) == [-1, 0, 3]
     assert list(second_row) == [-0.5, 0, 1]
     mat.col[2] /= 2
     assert mat == Matrix([[-1, -1, 0], [-0.5, 0.0, 0.5], [5, 3, 4]])
