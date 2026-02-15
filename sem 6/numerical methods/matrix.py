@@ -154,6 +154,12 @@ def test_matrix_constructors():
     assert Matrix.zero(2, 2) == Matrix([[0, 0], [0, 0]])
 
 
+def test_matrix_conviniecnes():
+    assert Matrix([[1, 2], [3, 4]]).T == Matrix([[1, 3], [2, 4]])
+    assert Matrix.from_vec([1, 2, 3]).T == Matrix([[1, 2, 3]])
+    assert Matrix([[1, 2, 3], [4, 5, 6]]).T == Matrix([[1, 4], [2, 5], [3, 6]])
+
+
 def test_inplaceops():
     vec = Matrix.from_vec([1, 2, 3])
     vec += vec
