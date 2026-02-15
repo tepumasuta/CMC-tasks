@@ -42,6 +42,21 @@ class Matrix[U]:
             return self.__add__(other)
         return NotImplemented
 
+    def __iadd__(self, other) -> "Matrix":
+        if isinstance(other, Matrix):
+            if self.cols != other.cols or self.rows != other.rows:
+                assert False, "TODO: raise ValueError"
+            if other is self:
+                tmp = self.__raw
+                self.__raw = [[tmp[i][j] + tmp[i][j] for j in range(self.cols)] for i in range(self.rows)]
+            else:
+                self.__raw = [[self[i, j] + other[i, j] for j in range(self.cols)] for i in range(self.rows)]
+            return self
+        if isinstance(other, (int, float)):
+            self.__raw = [[self[i, j] + other for j in range(self.cols)] for i in range(self.rows)]
+            return self
+        return NotImplemented
+
     def __sub__(self, other) -> "Matrix":
         if isinstance(other, Matrix):
             if self.cols != other.cols or self.rows != other.rows:
@@ -49,6 +64,21 @@ class Matrix[U]:
             return Matrix(((self[i, j] - other[i, j] for j in range(self.cols)) for i in range(self.rows)))
         if isinstance(other, (int, float)):
             return Matrix(((self[i, j] - other for j in range(self.cols)) for i in range(self.rows)))
+        return NotImplemented
+
+    def __isub__(self, other) -> "Matrix":
+        if isinstance(other, Matrix):
+            if self.cols != other.cols or self.rows != other.rows:
+                assert False, "TODO: raise ValueError"
+            if other is self:
+                tmp = self.__raw
+                self.__raw = [[tmp[i][j] - tmp[i][j] for j in range(self.cols)] for i in range(self.rows)]
+            else:
+                self.__raw = [[self[i, j] - other[i, j] for j in range(self.cols)] for i in range(self.rows)]
+            return self
+        if isinstance(other, (int, float)):
+            self.__raw = [[self[i, j] - other for j in range(self.cols)] for i in range(self.rows)]
+            return self
         return NotImplemented
 
     def __mul__(self, other) -> "Matrix":
@@ -65,6 +95,21 @@ class Matrix[U]:
             return self.__mul__(other)
         return NotImplemented
 
+    def __imul__(self, other) -> "Matrix":
+        if isinstance(other, Matrix):
+            if self.cols != other.cols or self.rows != other.rows:
+                assert False, "TODO: raise ValueError"
+            if other is self:
+                tmp = self.__raw
+                self.__raw = [[tmp[i][j] * tmp[i][j] for j in range(self.cols)] for i in range(self.rows)]
+            else:
+                self.__raw = [[self[i, j] * other[i, j] for j in range(self.cols)] for i in range(self.rows)]
+            return self
+        if isinstance(other, (int, float)):
+            self.__raw = [[v * other for v in row] for row in self.__raw]
+            return self
+        return NotImplemented
+
     def __truediv__(self, other) -> "Matrix":
         if isinstance(other, Matrix):
             if self.cols != other.cols or self.rows != other.rows:
@@ -72,6 +117,21 @@ class Matrix[U]:
             return Matrix(((self[i, j] / other[i, j] for j in range(self.cols)) for i in range(self.rows)))
         if isinstance(other, (int, float)):
             return Matrix(((v / other for v in row) for row in self.__raw))
+        return NotImplemented
+
+    def __itruediv__(self, other) -> "Matrix":
+        if isinstance(other, Matrix):
+            if self.cols != other.cols or self.rows != other.rows:
+                assert False, "TODO: raise ValueError"
+            if other is self:
+                tmp = self.__raw
+                self.__raw = [[tmp[i][j] / tmp[i][j] for j in range(self.cols)] for i in range(self.rows)]
+            else:
+                self.__raw = [[self[i, j] / other[i, j] for j in range(self.cols)] for i in range(self.rows)]
+            return self
+        if isinstance(other, (int, float)):
+            self.__raw = [[v / other for v in row] for row in self.__raw]
+            return self
         return NotImplemented
 
     def __floordiv__(self, other) -> "Matrix":
@@ -83,6 +143,21 @@ class Matrix[U]:
             return Matrix(((v // other for v in row) for row in self.__raw))
         return NotImplemented
 
+    def __ifloordiv__(self, other) -> "Matrix":
+        if isinstance(other, Matrix):
+            if self.cols != other.cols or self.rows != other.rows:
+                assert False, "TODO: raise ValueError"
+            if other is self:
+                tmp = self.__raw
+                self.__raw = [[tmp[i][j] // tmp[i][j] for j in range(self.cols)] for i in range(self.rows)]
+            else:
+                self.__raw = [[self[i, j] // other[i, j] for j in range(self.cols)] for i in range(self.rows)]
+            return self
+        if isinstance(other, int):
+            self.__raw = [[v // other for v in row] for row in self.__raw]
+            return self
+        return NotImplemented
+
     def __matmul__(self, other) -> "Matrix[U]":
         if isinstance(other, Matrix):
             if self.cols != other.rows:
@@ -91,6 +166,24 @@ class Matrix[U]:
                 (sum(self[i, k] * other[k, j] for k in range(self.cols)) for j in range(other.cols))
                 for i in range(self.rows)
             )
+        return NotImplemented
+
+    def __imatmul__(self, other) -> "Matrix[U]":
+        if isinstance(other, Matrix):
+            if self.cols != other.rows:
+                assert False, "TODO: raise ValueError"
+            if other is self:
+                tmp = self.__raw
+                self.__raw = [
+                    [sum(tmp[i][k] * other[k][j] for k in range(self.cols)) for j in range(other.cols)]
+                    for i in range(self.rows)
+                ]
+            else:
+                self.__raw = [
+                    [sum(self[i, k] * other[k, j] for k in range(self.cols)) for j in range(other.cols)]
+                    for i in range(self.rows)
+                ]
+            return self
         return NotImplemented
 
     def __getitem__(self, index: tuple[int, int]) -> U:
@@ -207,4 +300,4 @@ def test_inplaceops():
     vec /= 2
     assert vec == Matrix.from_vec([0.0, -0.375, 0.75])
     vec @= Matrix([[1, 2, 3]])
-    assert vec == Matrix([[0, 0, 0], [-0.375, -0.375 * 2, -0.375 * 3], [0.75, 0.75 * 2, 0.75 * 3]]).T
+    assert vec == Matrix([[0.0, 0.0, 0.0], [-0.375, -0.375 * 2, -0.375 * 3], [0.75, 0.75 * 2, 0.75 * 3]])
