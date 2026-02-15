@@ -1,6 +1,7 @@
 from typing import Iterable
 import copy
 import itertools
+import math
 
 
 class Matrix[U]:
@@ -183,6 +184,7 @@ class Matrix[U]:
                     [sum(self[i, k] * other[k, j] for k in range(self.cols)) for j in range(other.cols)]
                     for i in range(self.rows)
                 ]
+                self.__cols = other.cols
             return self
         return NotImplemented
 
@@ -198,7 +200,14 @@ class Matrix[U]:
         return (
             self.cols == other.cols
             and self.rows == other.rows
-            and all(self[i, j] == other[i, j] for i, j in itertools.product(range(self.rows), range(self.cols)))
+            and (
+                all(self[i, j] == other[i, j] for i, j in itertools.product(range(self.rows), range(self.cols)))
+                if self.cols == 0 or not isinstance(self[0, 0], float)
+                else all(
+                    math.isclose(self[i, j], other[i, j])
+                    for i, j in itertools.product(range(self.rows), range(self.cols))
+                )
+            )
         )
 
     def __repr__(self) -> str:
