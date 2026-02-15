@@ -1,3 +1,5 @@
+import determinant
+
 from collections.abc import Sized
 from typing import Iterable, Callable
 import copy
@@ -174,6 +176,13 @@ class Matrix[U]:
     @property
     def col(self) -> ColsView:
         return Matrix.ColsView(self)
+
+    def det(self, alg: "determinant.Determinant | None" = None) -> int:
+        if self.cols != self.rows:
+            assert False, "TODO: raise ValueError"
+        if alg is None:
+            alg = determinant.DeterminantStupid()
+        return alg.calculate(self)
 
     def __add__(self, other) -> "Matrix":
         if isinstance(other, Matrix):
