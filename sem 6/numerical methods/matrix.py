@@ -181,13 +181,6 @@ class Matrix[U]:
     def col(self) -> ColsView:
         return Matrix.ColsView(self)
 
-    def det(self, alg: "determinant.Determinant | None" = None) -> U:
-        if self.cols != self.rows:
-            assert False, "TODO: raise ValueError"
-        if alg is None:
-            alg = determinant.DeterminantStupid()
-        return alg.calculate(self)
-
     def __add__(self, other) -> "Matrix":
         if isinstance(other, Matrix):
             if self.cols != other.cols or self.rows != other.rows:
@@ -432,6 +425,29 @@ class Matrix[U]:
             convert_to_fractions=False,
         )
 
+    def det(self, alg: "determinant.Determinant | None" = None) -> U:
+        if self.cols != self.rows:
+            assert False, "TODO: raise ValueError"
+        if alg is None:
+            alg = determinant.DeterminantStupid()
+        return alg.calculate(self)
+
+    def minor(
+        self,
+        *,
+        rows: Iterable[int] | None = None,
+        cols: Iterable[int] | None = None,
+        alg: "determinant.Determinant | None" = None,
+    ) -> U:
+        rows = set(rows if rows is not None else range(self.rows))
+        cols = set(cols if cols is not None else range(self.cols))
+        if not rows or not cols:
+            assert False, "TODO: raise ValueError"
+
+        return Matrix([[self[i, j] for j in range(self.cols) if j in cols] for i in range(self.rows) if i in rows]).det(
+            alg
+        )
+
     def is_unit(self) -> bool:
         cmp = self.__get_cmp(self.generic_type)
         return self.is_diag() and all(cmp(self[i, i], 1) for i in range(self.rows))
@@ -457,6 +473,11 @@ class Matrix[U]:
         return self.cols == self.rows and all(
             cmp(self[i, j], 0) for i in range(self.rows) for j in range(i + 1, self.cols)
         )
+
+    def is_positively_definite(self, det_alg: "determinant.Determinant | None" = None) -> bool | None:
+        if not self.is_symmetric():
+            return None
+        return all(self.minor(cols=range(size), rows=range(size), alg=det_alg) > 0 for size in range(1, self.cols + 1))
 
     @staticmethod
     def __merge_types(t1: type, t2: type) -> type:
@@ -822,13 +843,12 @@ def test_positive_definiteness():
     assert Matrix([[1.0, 0, 0], [0, 1.0, 0], [0, 0, 3 / 3]]).is_positively_definite()
     assert Matrix.diag([1, 2, 3]).is_positively_definite()
     assert not Matrix.diag([-1, -1]).is_positively_definite()
-    assert Matrix([[1, 2], [0, 3]]).is_positively_definite()
-    assert Matrix([[1, 2], [0, 3]]).T.is_positively_definite()
-    assert Matrix([[1, 2], [2, 3]]).is_positively_definite()
-    assert Matrix([[1, 2], [2, 3]]).is_positively_definite()
+    assert Matrix([[1, 2], [0, 3]]).is_positively_definite() is None
+    assert Matrix([[1, 2], [0, 3]]).T.is_positively_definite() is None
+    assert not Matrix([[1, 2], [2, 3]]).is_positively_definite()
     assert Matrix([[2, -1], [-1, 2]]).is_positively_definite()
     assert not Matrix([[1, 2], [2, 1]]).is_positively_definite()
-    assert not Matrix.diag([[-1, -1]]).is_positively_definite()
+    assert not Matrix.diag([-1, -1]).is_positively_definite()
     assert not Matrix([[3, 2, 0], [2, 2, 2], [0, 2, 1]]).is_positively_definite()
 
 
