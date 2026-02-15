@@ -589,3 +589,52 @@ def test_swap():
     mat.swap_cols(0, 2)
     mat.swap_cols(0, 2)
     assert mat == Matrix([[5, 6, 4], [8, 9, 7], [2, 3, 1]])
+
+
+def test_special_matricies_checks():
+    assert Matrix.eye(3).is_unit()
+    assert Matrix.eye(3).is_symmetric()
+    assert Matrix.eye(3).is_upper_triangular()
+    assert Matrix.eye(3).is_lower_triangular()
+    assert Matrix.eye(3).is_positively_definit()
+
+    assert Matrix([[1.0, 0, 0], [0, 1.0, 0], [0, 0, 3 / 3]]).is_unit()
+    assert Matrix([[1.0, 0, 0], [0, 1.0, 0], [0, 0, 3 / 3]]).is_symmetric()
+    assert Matrix([[1.0, 0, 0], [0, 1.0, 0], [0, 0, 3 / 3]]).is_upper_triangular()
+    assert Matrix([[1.0, 0, 0], [0, 1.0, 0], [0, 0, 3 / 3]]).is_lower_triangular()
+    assert Matrix([[1.0, 0, 0], [0, 1.0, 0], [0, 0, 3 / 3]]).is_positively_definit()
+
+    assert not Matrix([1, 2], [0, 3]).is_unit()
+    assert not Matrix([1, 2], [0, 3]).is_symmetric()
+    assert Matrix([1, 2], [0, 3]).is_upper_triangular()
+    assert not Matrix([1, 2], [0, 3]).is_lower_triangular()
+    assert Matrix([1, 2], [0, 3]).is_positively_definit()
+
+    assert not Matrix([1, 2], [0, 3].T).is_unit()
+    assert not Matrix([1, 2], [0, 3].T).is_symmetric()
+    assert not Matrix([1, 2], [0, 3].T).is_upper_triangular()
+    assert Matrix([1, 2], [0, 3].T).is_lower_triangular()
+    assert Matrix([1, 2], [0, 3].T).is_positively_definit()
+
+    assert not Matrix([1, 2], [2, 3]).is_unit()
+    assert Matrix([1, 2], [2, 3]).is_symmetric()
+    assert Matrix([1, 2], [2, 3].T).is_symmetric()
+    assert not Matrix([1, 2], [2, 3]).is_upper_triangular()
+    assert not Matrix([1, 2], [2, 3]).is_lower_triangular()
+    assert Matrix([1, 2], [2, 3]).is_positively_definit()
+
+    assert not Matrix([1, 2], [2, 3]).is_unit()
+    assert Matrix([1, 2], [2, 3]).is_symmetric()
+    assert Matrix([1, 2], [2, 3].T).is_symmetric()
+    assert not Matrix([1, 2], [2, 3]).is_upper_triangular()
+    assert not Matrix([1, 2], [2, 3]).is_lower_triangular()
+    assert Matrix([1, 2], [2, 3]).is_positively_definit()
+
+    assert Matrix([2, -1], [-1, 2]).is_positively_definit()
+    assert not Matrix([1, 2], [2, 1]).is_positively_definit()
+    assert not Matrix([-1, 0], [0, -1]).is_positively_definit()
+    assert not Matrix([3, 2, 0], [2, 2, 2], [0, 2, 1]).is_positively_definit()
+
+    assert Matrix([1, 10**9 / 10**9], [1000 / 1000, 3]).is_symmetric()
+    assert not Matrix([1, 2], [1 / 10**15, 3]).is_upper_triangular()
+    assert not Matrix([1, 10**-15], [2, 3]).is_lower_triangular()
