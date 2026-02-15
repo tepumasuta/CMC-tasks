@@ -1,5 +1,5 @@
 from collections.abc import Sized
-from typing import Iterable
+from typing import Iterable, Callable
 import copy
 import itertools
 import functools
@@ -381,6 +381,32 @@ class Matrix[U]:
         for k in range(self.rows):
             self[k, i], self[k, j] = self[k, j], self[k, i]
 
+    def is_unit(self) -> bool:
+        cmp = self.__get_cmp(self.generic_type)
+        return self.is_diag() and all(cmp(self[i, i], 1) for i in range(self.rows))
+
+    def is_diag(self) -> bool:
+        cmp = self.__get_cmp(self.generic_type)
+        return self.cols == self.rows and all(
+            cmp(self[i, j], 0) for i, j in itertools.product(range(self.cols), repeat=2) if i != j
+        )
+
+    def is_symmetric(self) -> bool:
+        cmp = self.__get_cmp(self.generic_type)
+        return all(cmp(self[i, j], self[j, i]) for i in range(self.rows) for j in range(i + 1, self.cols))
+
+    def is_upper_triangular(self) -> bool:
+        cmp = self.__get_cmp(self.generic_type)
+        return self.cols == self.rows and all(
+            cmp(self[i, j], 0) for j in range(self.cols) for i in range(j + 1, self.rows)
+        )
+
+    def is_lower_triangular(self) -> bool:
+        cmp = self.__get_cmp(self.generic_type)
+        return self.cols == self.rows and all(
+            cmp(self[i, j], 0) for i in range(self.rows) for j in range(i + 1, self.cols)
+        )
+
     @staticmethod
     def __merge_types(t1: type, t2: type) -> type:
         if t1 is float and t2 is float:
@@ -394,7 +420,7 @@ class Matrix[U]:
         assert False, "TODO: raise ValueError"
 
     @staticmethod
-    def __get_cmp(t):
+    def __get_cmp(t) -> Callable[[U, U], bool]:
         if t is float:
             return lambda x, y: math.isclose(x, y)
         if issubclass(t, int):
@@ -620,48 +646,67 @@ def test_swap():
 
 def test_special_matricies_checks():
     assert Matrix.eye(3).is_unit()
+    assert Matrix.eye(3).is_diag()
     assert Matrix.eye(3).is_symmetric()
     assert Matrix.eye(3).is_upper_triangular()
     assert Matrix.eye(3).is_lower_triangular()
-    assert Matrix.eye(3).is_positively_definit()
 
     assert Matrix([[1.0, 0, 0], [0, 1.0, 0], [0, 0, 3 / 3]]).is_unit()
+    assert Matrix([[1.0, 0, 0], [0, 1.0, 0], [0, 0, 3 / 3]]).is_diag()
     assert Matrix([[1.0, 0, 0], [0, 1.0, 0], [0, 0, 3 / 3]]).is_symmetric()
     assert Matrix([[1.0, 0, 0], [0, 1.0, 0], [0, 0, 3 / 3]]).is_upper_triangular()
     assert Matrix([[1.0, 0, 0], [0, 1.0, 0], [0, 0, 3 / 3]]).is_lower_triangular()
-    assert Matrix([[1.0, 0, 0], [0, 1.0, 0], [0, 0, 3 / 3]]).is_positively_definit()
 
-    assert not Matrix([1, 2], [0, 3]).is_unit()
-    assert not Matrix([1, 2], [0, 3]).is_symmetric()
-    assert Matrix([1, 2], [0, 3]).is_upper_triangular()
-    assert not Matrix([1, 2], [0, 3]).is_lower_triangular()
-    assert Matrix([1, 2], [0, 3]).is_positively_definit()
+    assert not Matrix.diag([1, 2, 3]).is_unit()
+    assert Matrix.diag([1, 2, 3]).is_diag()
+    assert Matrix.diag([1, 2, 3]).is_symmetric()
+    assert Matrix.diag([1, 2, 3]).is_upper_triangular()
+    assert Matrix.diag([1, 2, 3]).is_lower_triangular()
 
-    assert not Matrix([1, 2], [0, 3].T).is_unit()
-    assert not Matrix([1, 2], [0, 3].T).is_symmetric()
-    assert not Matrix([1, 2], [0, 3].T).is_upper_triangular()
-    assert Matrix([1, 2], [0, 3].T).is_lower_triangular()
-    assert Matrix([1, 2], [0, 3].T).is_positively_definit()
+    assert not Matrix.diag([-1, -2, -3]).is_unit()
+    assert Matrix.diag([-1, -2, -3]).is_diag()
+    assert Matrix.diag([-1, -2, -3]).is_symmetric()
+    assert Matrix.diag([-1, -2, -3]).is_upper_triangular()
+    assert Matrix.diag([-1, -2, -3]).is_lower_triangular()
 
-    assert not Matrix([1, 2], [2, 3]).is_unit()
-    assert Matrix([1, 2], [2, 3]).is_symmetric()
-    assert Matrix([1, 2], [2, 3].T).is_symmetric()
-    assert not Matrix([1, 2], [2, 3]).is_upper_triangular()
-    assert not Matrix([1, 2], [2, 3]).is_lower_triangular()
-    assert Matrix([1, 2], [2, 3]).is_positively_definit()
+    assert not Matrix([[1, 2], [0, 3]]).is_unit()
+    assert not Matrix([[1, 2], [0, 3]]).is_diag()
+    assert not Matrix([[1, 2], [0, 3]]).is_symmetric()
+    assert Matrix([[1, 2], [0, 3]]).is_upper_triangular()
+    assert not Matrix([[1, 2], [0, 3]]).is_lower_triangular()
 
-    assert not Matrix([1, 2], [2, 3]).is_unit()
-    assert Matrix([1, 2], [2, 3]).is_symmetric()
-    assert Matrix([1, 2], [2, 3].T).is_symmetric()
-    assert not Matrix([1, 2], [2, 3]).is_upper_triangular()
-    assert not Matrix([1, 2], [2, 3]).is_lower_triangular()
-    assert Matrix([1, 2], [2, 3]).is_positively_definit()
+    assert not Matrix([[1, 2], [0, 3]]).T.is_unit()
+    assert not Matrix([[1, 2], [0, 3]]).T.is_symmetric()
+    assert not Matrix([[1, 2], [0, 3]]).T.is_upper_triangular()
+    assert Matrix([[1, 2], [0, 3]]).T.is_lower_triangular()
 
-    assert Matrix([2, -1], [-1, 2]).is_positively_definit()
-    assert not Matrix([1, 2], [2, 1]).is_positively_definit()
-    assert not Matrix([-1, 0], [0, -1]).is_positively_definit()
-    assert not Matrix([3, 2, 0], [2, 2, 2], [0, 2, 1]).is_positively_definit()
+    assert not Matrix([[1, 2], [2, 3]]).is_unit()
+    assert Matrix([[1, 2], [2, 3]]).is_symmetric()
+    assert Matrix([[1, 2], [2, 3]]).T.is_symmetric()
+    assert not Matrix([[1, 2], [2, 3]]).is_upper_triangular()
+    assert not Matrix([[1, 2], [2, 3]]).is_lower_triangular()
 
-    assert Matrix([1, 10**9 / 10**9], [1000 / 1000, 3]).is_symmetric()
-    assert not Matrix([1, 2], [1 / 10**15, 3]).is_upper_triangular()
-    assert not Matrix([1, 10**-15], [2, 3]).is_lower_triangular()
+    assert not Matrix([[1, 2], [2, 3]]).is_unit()
+    assert Matrix([[1, 2], [2, 3]]).is_symmetric()
+    assert Matrix([[1, 2], [2, 3]]).T.is_symmetric()
+    assert not Matrix([[1, 2], [2, 3]]).is_upper_triangular()
+    assert not Matrix([[1, 2], [2, 3]]).is_lower_triangular()
+
+    assert Matrix([[1, 10**9 / 10**9], [1000 / 1000, 3]]).is_symmetric()
+    assert not Matrix([[1, 2], [1 / 10**15, 3]]).is_upper_triangular()
+    assert not Matrix([[1, 10**-15], [2, 3]]).is_lower_triangular()
+
+
+def test_positive_definiteness():
+    assert Matrix.eye(3).is_positively_definite()
+    assert Matrix([[1.0, 0, 0], [0, 1.0, 0], [0, 0, 3 / 3]]).is_positively_definite()
+    assert Matrix.diag([1, 2, 3]).is_positively_definite()
+    assert not Matrix.diag([-1, -1]).is_positively_definite()
+    assert Matrix([[1, 2], [0, 3]]).is_positively_definite()
+    assert Matrix([[1, 2], [0, 3]]).T.is_positively_definite()
+    assert Matrix([[1, 2], [2, 3]]).is_positively_definite()
+    assert Matrix([[1, 2], [2, 3]]).is_positively_definite()
+    assert Matrix([[2, -1], [-1, 2]]).is_positively_definite()
+    assert not Matrix([[1, 2], [2, 1]]).is_positively_definite()
+    assert not Matrix.diag([[-1, -1]]).is_positively_definite()
+    assert not Matrix([[3, 2, 0], [2, 2, 2], [0, 2, 1]]).is_positively_definite()
