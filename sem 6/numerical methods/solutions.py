@@ -1,5 +1,6 @@
 import matrix
 import random_gen
+import determinant
 
 import abc
 import dataclasses
@@ -8,11 +9,29 @@ import dataclasses
 class LinearSystemSolver(abc.ABC):
     @dataclasses.dataclass
     class Solution:
-        solution: 'matrix.Matrix'
         solvable: bool
-    
+        solution: "matrix.Matrix | None" = None
+
     @abc.abstractmethod
     def solve(self, system: "matrix.Matrix", rhs: "matrix.Matrix") -> Solution: ...
+
+
+class LinearSystemCramer(LinearSystemSolver):
+    def __init__(self, det: "determinant.Determinant | None" = None):
+        self.det = det
+
+    def solve(self, system: "matrix.Matrix", rhs: "matrix.Matrix"):
+        if system.cols != system.rows or system.rows != rhs.rows:
+            assert False, "TODO: raise ValueError"
+        det = system.det(self.det)
+        if det == 0:
+            return LinearSystemSolver.Solution(False)
+        res = []
+        for j in range(system.cols):
+            mat = system.copy()
+            mat.col[j] = rhs.col[0]
+            res.append(mat.det(self.det) / det)
+        return LinearSystemSolver.Solution(True, matrix.Matrix.vec(res))
 
 
 def basic_test(solver: LinearSystemSolver):
@@ -31,5 +50,6 @@ def basic_test(solver: LinearSystemSolver):
         solution = solver.solve(system.system, system.rhs)
         assert not solution.solvable
 
-def test_kronecker():
-    basic_test(LinearSystemKronecker())
+
+def test_cramer():
+    basic_test(LinearSystemCramer())
