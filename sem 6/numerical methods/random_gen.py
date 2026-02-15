@@ -117,6 +117,52 @@ def generate_random_lower_triangular_matrix(
     return m.T
 
 
+def generate_random_diagonal_matrix(
+    *, size=None, low=None, high=None, span: None | range = None, value_type=None
+) -> Matrix:
+    if span is not None and (low is not None or high is not None or value_type is not None):
+        assert False, "TODO: raise ValueError"
+    if value_type is None:
+        t = type(low)
+        if t is type(None) or type(high) is float:
+            t = type(high)
+        value_type = t
+
+    # TODO: Make better check
+    # if low is not None and not issubclass(value_type, type(low)):
+    #     assert False, "TODO: raise ValueError"
+    # if high is not None and not issubclass(value_type, type(high)):
+    #     assert False, "TODO: raise ValueError"
+
+    cols = size
+    rows = size
+
+    if rows <= 0 or cols <= 0:
+        assert False, "TODO: raise ValueError"
+
+    if span is not None:
+        linearized = iter(random.choices(span, k=size))
+    elif value_type is float:
+        if low is None:
+            low = 0.0
+        if high is None:
+            high = 1.0
+        if low > high:
+            assert False, "TODO: raise ValueError"
+        linearized = (random.random() * (high - low) + low for i in range(rows))
+    elif value_type is int:
+        if high is None:
+            high = 2**64
+        if low is None:
+            low = -(2**64)
+        if low > high:
+            assert False, "TODO: raise ValueError"
+        linearized = (random.randint(low, high) for i in range(rows))
+    else:
+        assert False, "TODO: raise ValueError"
+    return Matrix.diag(linearized)
+
+
 def test_random_matrices():
     seeds = random.choices(range(2_781_443_143_657_574), k=10**5)
     state = random.getstate()
@@ -325,6 +371,8 @@ def test_random_lower_triangular_matrix():
             assert mat.is_lower_triangular()
 
     random.setstate(state)
+
+
 def test_random_diagonal_matrix():
     seeds = random.choices(range(2_781_443_143_657_574), k=10**5)
     state = random.getstate()
@@ -336,7 +384,7 @@ def test_random_diagonal_matrix():
         for size in range(1, 6):
             mat = generate_random_diagonal_matrix(size=size, low=-1000, high=1000)
             assert all(
-                -1000 <= mat[i, j] <= 1000 if i != j else mat[i, j] == 0
+                -1000 <= mat[i, j] <= 1000 if i == j else mat[i, j] == 0
                 for i, j in itertools.product(range(size), repeat=2)
             )
             assert mat.cols == mat.rows == size
@@ -347,7 +395,7 @@ def test_random_diagonal_matrix():
             low, high = min(low, high), max(low, high)
             mat = generate_random_diagonal_matrix(size=size, low=low, high=high)
             assert all(
-                low <= mat[i, j] <= high if i != j else mat[i, j] == 0
+                low <= mat[i, j] <= high if i == j else mat[i, j] == 0
                 for i, j in itertools.product(range(size), repeat=2)
             )
             assert mat.cols == mat.rows == size
@@ -356,7 +404,7 @@ def test_random_diagonal_matrix():
         for size in range(1, 6):
             mat = generate_random_diagonal_matrix(size=size, low=-666, high=15.0)
             assert all(
-                -666 <= mat[i, j] <= 15.0 if i != j else mat[i, j] == 0
+                -666 <= mat[i, j] <= 15.0 if i == j else mat[i, j] == 0
                 for i, j in itertools.product(range(size), repeat=2)
             )
             assert mat.cols == mat.rows == size
@@ -365,7 +413,7 @@ def test_random_diagonal_matrix():
         for size in range(1, 6):
             mat = generate_random_diagonal_matrix(size=size, value_type=float)
             assert all(
-                0.0 <= mat[i, j] <= 1.0 if i != j else mat[i, j] == 0
+                0.0 <= mat[i, j] <= 1.0 if i == j else mat[i, j] == 0
                 for i, j in itertools.product(range(size), repeat=2)
             )
             assert mat.cols == mat.rows == size
@@ -374,7 +422,7 @@ def test_random_diagonal_matrix():
         for size in range(1, 6):
             mat = generate_random_diagonal_matrix(size=size, span=range(-100, 200, 5))
             assert all(
-                -100 <= mat[i, j] <= 200 and mat[i, j] % 5 == 0 if i != j else mat[i, j] == 0
+                -100 <= mat[i, j] <= 200 and mat[i, j] % 5 == 0 if i == j else mat[i, j] == 0
                 for i, j in itertools.product(range(size), repeat=2)
             )
             assert mat.cols == mat.rows == size
