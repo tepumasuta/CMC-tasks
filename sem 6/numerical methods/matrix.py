@@ -93,3 +93,10 @@ def test_scaldiv():
     assert Matrix([[1, 2], [3, 4]]) / 2 == Matrix([[0.5, 1], [1.5, 2]])
     assert Matrix([[1, 2], [3, 4]]) // 2 == Matrix([[0, 1], [1, 2]])
     assert Matrix([[1, 2], [3, 4]]) / 0.5 == Matrix([[2, 4], [6, 8]])
+
+
+def test_matops():
+    assert Matrix([[1, 2], [3, 4]]) + Matrix([[5, 6], [7, 8]]) == Matrix([[6, 8], [10, 12]])
+    assert Matrix([[1, 2], [3, 4]]) - Matrix([[1, 0], [0, 1]]) == Matrix([[0, 2], [3, 3]])
+    assert Matrix([[1, 2, 3], [4, 5, 6]]) + Matrix([[1, 1, 1], [1, 1, 1]]) == Matrix([[2, 3, 4], [5, 6, 7]])
+    assert Matrix([[1, 2, 3], [4, 5, 6]]) - Matrix([[1, 1, 1], [1, 1, 1]]) == Matrix([[0, 1, 2], [3, 4, 5]])
