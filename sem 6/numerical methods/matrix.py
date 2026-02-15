@@ -25,14 +25,14 @@ class Matrix[T]:
         return self.__cols
 
     def __mul__(self, other) -> "Matrix":
-        if type(other) is Matrix:
+        if isinstance(other, Matrix):
             if self.cols != other.rows:
                 assert False, "TODO: raise ValueError"
             return Matrix(
                 (sum(self[i, k] * other[k, j] for k in range(self.cols)) for j in range(other.cols))
                 for i in range(self.rows)
             )
-        if type(other) in (int, float):
+        if isinstance(other, (int, float)):
             return Matrix([[v * other for v in row] for row in self.__raw])
         return NotImplemented
 
