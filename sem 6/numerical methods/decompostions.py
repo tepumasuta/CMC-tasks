@@ -88,3 +88,34 @@ def test_basicsqrtdec():
             assert diag.is_diag()
             assert left.T == right
             assert left @ diag @ right == m
+
+def test_choletskysqrtdec():
+    for s in range(1, 10):
+        m = random_gen.generate_random_matrix(size=s, low=-100, high=100)
+        assert CholetskySquareRootDecompostion(m).is_applicable() == m.is_positively_definite()
+    for _ in range(6):
+        for size in range(1, 7):
+            m = random_gen.generate_random_symmetric_matrix(size=size, low=-100, high=100)
+            decomposable = m.is_positively_definite() and all(m[i, i] != 0 for i in range(size))
+            dec = CholetskySquareRootDecompostion(m)
+            assert dec.is_applicable() == decomposable
+            if not decomposable:
+                continue
+            left, right = dec.decompose()
+            assert left.is_lower_triangular()
+            assert right.is_upper_triangular()
+            assert left.T == right
+            assert left @ right == m
+    for _ in range(6):
+        for size in range(1, 7):
+            m = random_gen.generate_random_positively_definite_matrix(size=size, low=-100, high=100)
+            decomposable = all(m[i, i] != 0 for i in range(size))
+            dec = CholetskySquareRootDecompostion(m)
+            assert dec.is_applicable() == decomposable
+            if not decomposable:
+                continue
+            left, right = dec.decompose()
+            assert left.is_lower_triangular()
+            assert right.is_upper_triangular()
+            assert left.T == right
+            assert left @ right == m
