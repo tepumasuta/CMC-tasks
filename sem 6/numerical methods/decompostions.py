@@ -56,6 +56,26 @@ class BasicSquareRootDecompostion[T](SquareRootDecompostion):
         )
 
 
+class CholetskySquareRootDecompostion[T](SquareRootDecompostion):
+    def __init__(self, mat):
+        super().__init__(mat)
+
+    def is_applicable(self) -> bool:
+        return self.mat.is_positively_definite() and all(self.mat[i, i] != 0 for i in range(self.mat.cols))
+
+    def decompose(self) -> "tuple[matrix.Matrix[T], matrix.Matrix[T]]":
+        s = matrix.Matrix(
+            ((self.s(i, j) if j >= i else 0 for j in range(self.mat.cols)) for i in range(self.mat.rows)),
+        )
+        return s.T, s
+
+    @functools.cache
+    def s(self, i, j):
+        if i == j:
+            return math.sqrt(self.mat[i, i] - sum(self.s(l, i) ** 2 for l in range(i)))
+        return (self.mat[i, j] - sum(self.s(l, i) * self.s(l, j) for l in range(i))) / self.s(i, i)
+
+
 def test_basicsqrtdec():
     for s in range(1, 10):
         m = random_gen.generate_random_matrix(size=s, low=-100, high=100)
@@ -88,6 +108,7 @@ def test_basicsqrtdec():
             assert diag.is_diag()
             assert left.T == right
             assert left @ diag @ right == m
+
 
 def test_choletskysqrtdec():
     for s in range(1, 10):
