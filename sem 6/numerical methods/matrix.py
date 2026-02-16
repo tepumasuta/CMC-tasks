@@ -1,6 +1,6 @@
 import determinant
 
-from collections.abc import Sized
+import collections
 from typing import Iterable, Callable
 import copy
 import itertools
@@ -27,6 +27,10 @@ class Matrix[U]:
                 for j in range(self.mat.cols):
                     self.mat[self.index, j] += other
                 return self
+            if isinstance(other, collections.abc.Iterable):
+                for j, v in zip(range(self.mat.cols), other):
+                    self.mat[self.index, j] += v
+                return self
             return NotImplemented
 
         def __isub__(self, other):
@@ -34,6 +38,17 @@ class Matrix[U]:
                 for j in range(self.mat.cols):
                     self.mat[self.index, j] -= other
                 return self
+            if isinstance(other, collections.abc.Iterable):
+                for j, v in zip(range(self.mat.cols), other):
+                    self.mat[self.index, j] -= v
+                return self
+            return NotImplemented
+
+        def __mul__(self, other):
+            if isinstance(other, (int, float, Fraction)):
+                for j in range(self.mat.cols):
+                    yield self.mat[self.index, j] * other
+                return
             return NotImplemented
 
         def __imul__(self, other):
@@ -115,7 +130,7 @@ class Matrix[U]:
         def __setitem__(self, index, value: Iterable[U]):
             if isinstance(value, Matrix.Row) and value.index == index and self.base == value.mat:
                 return
-            if not isinstance(value, Sized) or isinstance(value, Matrix.Col) and value.mat is self.base:
+            if not isinstance(value, collections.abc.Sized) or isinstance(value, Matrix.Col) and value.mat is self.base:
                 value = tuple(value)
             if self.base.rows != len(value):
                 assert False, "TODO: raise ValueError"
