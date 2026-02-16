@@ -149,7 +149,7 @@ class Matrix[U]:
         def __setitem__(self, index, value: Iterable[U]):
             if isinstance(value, Matrix.Col) and value.index == index and self.base == value.mat:
                 return
-            if not isinstance(value, Sized) or isinstance(value, Matrix.Row) and value.mat is self.base:
+            if not isinstance(value, collections.abc.Sized) or isinstance(value, Matrix.Row) and value.mat is self.base:
                 value = tuple(value)
             if self.base.rows != len(value):
                 assert False, "TODO: raise ValueError"
