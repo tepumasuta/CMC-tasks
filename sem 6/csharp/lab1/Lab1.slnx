@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="ModelLib/ModelLib.csproj" />
+  <Project Path="ViewLib/ViewLib.csproj" />
+</Solution>
