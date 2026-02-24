@@ -2,4 +2,4 @@
 **/*.pdf
 **/download_tests.py
 **/public_tests
-
+**/05-SVM
