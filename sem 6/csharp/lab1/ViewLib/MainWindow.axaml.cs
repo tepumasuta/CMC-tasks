@@ -9,6 +9,7 @@ using MsBox.Avalonia.Enums;
 using System;
 using System.Threading.Tasks;
 using System.IO;
+using System.Linq;
 
 namespace ViewLib;
 
@@ -70,6 +71,12 @@ public partial class MainWindow : Window
         await SaveDataAsync();
     }
 
+    private void SubsetButton_Click(object sender, RoutedEventArgs e)
+    {
+        _testData.Substring = textBox_substring.Text ?? "";
+        UpdateSubsetList();
+    }
+
     private async Task SaveDataAsync()
     {
         try
@@ -123,6 +130,9 @@ public partial class MainWindow : Window
                 _currentFileName = file;
                 UpdateUIFromTestData();
                 FileNameTextBlock.Text = _currentFileName;
+
+                textBox_substring.Text = _testData.Substring;
+                UpdateSubsetList();
             }
         }
         catch (Exception ex)
@@ -136,10 +146,29 @@ public partial class MainWindow : Window
     }
     private void UpdateUIFromTestData()
     {
+
         FiringListBox.ItemsSource = _testData.FiringList;
         WhenDatePicker.SelectedDate = _testData.When;
         ToStringTextBlock.Text = _testData.ToString();
         FileNameTextBlock.Text = _currentFileName ?? "[файл не загружен]";
         SaveButton.IsEnabled = !_testData.IsSaved;
+
+        textBox_substring.Text = _testData.Substring;
+        UpdateSubsetList();
+    }
+
+    private void UpdateSubsetList()
+    {
+        var subset = _testData.Subset(_testData.Substring).ToList();
+        listBox_subset.ItemsSource = subset;
+
+        if (subset.Count == 0 && !string.IsNullOrEmpty(_testData.Substring))
+        {
+            _ = MessageBoxManager.GetMessageBoxStandard(
+                "Информация",
+                "В списке нет строк, содержащих заданную подстроку.",
+                ButtonEnum.Ok
+            ).ShowAsync();
+        }
     }
 }
