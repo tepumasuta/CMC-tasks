@@ -5,24 +5,39 @@ from fractions import Fraction
 from typing import Self
 
 
+def is_integral(value: int | float | Fraction | numbers.Complex) -> bool:
+    if isinstance(value, int):
+        return True
+    if isinstance(value, float):
+        return value.is_integer()
+    if isinstance(value, Fraction):
+        return value.denominator == 1
+    if isinstance(value, numbers.Complex):
+        return isinstance(value, numbers.Integral)
+    return False
+
+
+def to_integer(value: int | float | Fraction | numbers.Complex) -> int:
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if isinstance(value, Fraction):
+        return value.numerator
+    if isinstance(value, Int):
+        return value.value
+    if isinstance(value, numbers.Complex):
+        return int(value)
+    raise ValueError(f"Unknown value type: {type(value)}; passed: {value}")
+
+
 class Int(numbers.Integral):
     def __init__(self, value: numbers.Complex = 0):
         super().__init__()
-        if isinstance(value, int):
-            self.value = value
+        if is_integral(value):
+            self.value = to_integer(value)
             return
-        elif isinstance(value, float):
-            if value.is_integer():
-                self.value = int(value)
-                return
-        elif isinstance(value, Fraction):
-            if value.denominator == 1:
-                self.value = value.numerator
-                return
-        elif isinstance(value, Int):
-            self.value = value.value
-            return
-        assert False, "TODO: implement other types"
+        raise ValueError(f"Non integral value: {value}")
 
     def __int__(self):
         return self.value
@@ -37,16 +52,16 @@ class Int(numbers.Integral):
         return Int(abs(self.value))
 
     def __add__(self, other: numbers.Complex) -> numbers.Complex:
-        if isinstance(other, numbers.Integral):
-            return Int(self.value + Int(other).value)
+        if is_integral(other):
+            return Int(self.value + to_integer(other))
         return NotImplemented
 
     def __radd__(self, other: numbers.Complex) -> numbers.Complex:
         return self.__add__(other)
 
     def __mul__(self, other: numbers.Complex) -> numbers.Complex:
-        if isinstance(other, numbers.Integral):
-            return Int(self.value * Int(other).value)
+        if is_integral(other):
+            return Int(self.value * to_integer(other))
         return NotImplemented
 
     def __rmul__(self, other: numbers.Complex) -> numbers.Complex:
@@ -59,23 +74,23 @@ class Int(numbers.Integral):
         assert False, "TODO: implement"
 
     def __mod__(self, other) -> Self:
-        if isinstance(other, numbers.Integral):
-            return Int(self.value % Int(other).value)
+        if is_integral(other):
+            return Int(self.value % to_integer(other))
         return NotImplemented
 
     def __rmod__(self, other) -> Self:
-        if isinstance(other, numbers.Integral):
-            return Int(other) % self
+        if is_integral(other):
+            return Int(to_integer(other)) % self
         return NotImplemented
 
     def __floordiv__(self, other) -> Self:
-        if isinstance(other, numbers.Integral):
-            return Int(self.value // Int(other).value)
+        if is_integral(other):
+            return Int(self.value // to_integer(other))
         return NotImplemented
 
     def __rfloordiv__(self, other) -> Self:
-        if isinstance(other, numbers.Integral):
-            return Int(other) // self
+        if is_integral(other):
+            return Int(to_integer(other)) // self
         return NotImplemented
 
     def __pow__(self, exponent, modulus=None):
@@ -88,24 +103,24 @@ class Int(numbers.Integral):
         return Int(~self.value)
 
     def __and__(self, other) -> Self:
-        if isinstance(other, numbers.Integral):
-            return Int(self.value & Int(other).value)
+        if is_integral(other):
+            return Int(self.value & to_integer(other))
         return NotImplemented
 
     def __rand__(self, other) -> Self:
         return self.__and__(other)
 
     def __or__(self, other) -> Self:
-        if isinstance(other, numbers.Integral):
-            return Int(self.value | Int(other).value)
+        if is_integral(other):
+            return Int(self.value | to_integer(other))
         return NotImplemented
 
     def __ror__(self, other) -> Self:
         return self.__or__(other)
 
     def __xor__(self, other) -> Self:
-        if isinstance(other, numbers.Integral):
-            return Int(self.value ^ Int(other).value)
+        if is_integral(other):
+            return Int(self.value ^ to_integer(other))
         return NotImplemented
 
     def __rxor__(self, other) -> Self:
@@ -126,55 +141,55 @@ class Int(numbers.Integral):
     def __eq__(self, other) -> bool:
         if not isinstance(other, numbers.Complex):
             return False
-        if isinstance(other, numbers.Integral):
-            return self.value == Int(other).value
+        if is_integral(other):
+            return self.value == to_integer(other)
         return NotImplemented
 
     def __le__(self, other) -> bool:
-        if isinstance(other, numbers.Integral):
-            return self.value <= Int(other).value
+        if is_integral(other):
+            return self.value <= to_integer(other)
         return NotImplemented
 
     def __lt__(self, other) -> bool:
-        if isinstance(other, numbers.Integral):
-            return self.value < Int(other).value
+        if is_integral(other):
+            return self.value < to_integer(other)
         return NotImplemented
-    
+
     def __ge__(self, other) -> bool:
-        if isinstance(other, numbers.Integral):
-            return self.value >= Int(other).value
+        if is_integral(other):
+            return self.value >= to_integer(other)
         return NotImplemented
 
     def __gt__(self, other) -> bool:
-        if isinstance(other, numbers.Integral):
-            return self.value > Int(other).value
+        if is_integral(other):
+            return self.value > to_integer(other)
         return NotImplemented
 
     def __lshift__(self, other) -> Self:
-        if isinstance(other, numbers.Integral):
-            return Int(self.value << Int(other).value)
+        if is_integral(other):
+            return Int(self.value << to_integer(other))
         return NotImplemented
 
     def __rlshift__(self, other) -> Self:
-        if isinstance(other, numbers.Integral):
-            return Int(other) << self
+        if is_integral(other):
+            return Int(to_integer(other)) << self
         return NotImplemented
 
     def __rshift__(self, other):
-        if isinstance(other, numbers.Integral):
-            return Int(self.value >> Int(other).value)
+        if is_integral(other):
+            return Int(self.value >> to_integer(other))
         return NotImplemented
 
     def __rrshift__(self, other):
-        if isinstance(other, numbers.Integral):
-            return Int(other) >> self
+        if is_integral(other):
+            return Int(to_integer(other)) >> self
         return NotImplemented
-    
+
     def __repr__(self):
-        return f'{self.value}'
+        return f"{self.value}"
 
     def __str__(self):
-        return f'Int({self.value})'
+        return f"Int({self.value})"
 
 
 def test_int_constructors():
