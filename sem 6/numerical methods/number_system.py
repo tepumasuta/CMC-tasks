@@ -1,3 +1,5 @@
+import pytest
+
 import numbers
 from fractions import Fraction
 from typing import Self
@@ -166,3 +168,175 @@ def test_int_constructors():
     assert 69 == Int(69)
     assert Int(69.0) == Int(69)
     assert Int(Fraction(42)) == Int(42)
+
+
+def test_int_comparisons():
+    assert Int(5) == Int(5)
+    assert Int(-5) == Int(-5)
+    assert Int(0) == Int(0)
+    assert Int(10**100) == Int(10**100)
+    assert Int(10**100) != Int(10**100 + 1)
+
+    assert Int(5) == 5
+    assert 5 == Int(5)
+    assert Int(-5) == -5
+    assert -5 == Int(-5)
+    assert Int(0) == 0
+    assert 0 == Int(0)
+    assert Int(5) != 6
+    assert 6 != Int(5)
+
+    assert Int(5) == 5.0
+    assert 5.0 == Int(5)
+    assert 5.0 + 1e-14 == Int(5)
+    assert Int(5) == 5.0 + 1e-14
+    assert 5.0 - 1e-14 == Int(5)
+    assert Int(5) != 5.0 + 1e-7
+    assert 5.0 + 1e-7 != Int(5)
+    assert 6.0 != Int(5)
+    assert Int(5) != 6.0
+    assert Int(5) == 5.0 + 1e-12
+    assert Int(5) != 5.0 + 1e-8
+
+    assert Fraction(5) == Int(5)
+    assert Int(5) == Fraction(5)
+    assert Int(5) != Fraction(5, 2)
+    assert Fraction(5, 2) != Int(2)
+
+    assert Int(5) != "5"
+    assert "5" != Int(5)
+    assert Int(5) != [5]
+    assert [5] != Int(5)
+    assert Int(5) != (5,)
+    assert (5,) != Int(5)
+    assert Int(5) != {5: 5}
+    assert Int(5) != None
+    assert None != Int(5)
+    assert Int(5) != object()
+
+    assert (Int(5) != Int(5)) is False
+    assert (Int(5) != 5) is False
+    assert (5 != Int(5)) is False
+    assert (Int(5) != 5.0) is False
+    assert (5.0 != Int(5)) is False
+    assert (Fraction(5) != Int(5)) is False
+    assert (Int(5) != Fraction(5)) is False
+    assert (Int(5) != "5") is True
+
+    assert Int(5) < Int(6)
+    assert Int(5) <= Int(5)
+    assert not (Int(5) < Int(5))
+    assert Int(6) > Int(5)
+    assert Int(6) >= Int(5)
+    assert Int(-10) < Int(-5)
+    assert Int(-5) <= Int(-5)
+
+    assert Int(5) < 6
+    assert 5 < Int(6)
+    assert Int(5) <= 5
+    assert 5 <= Int(5)
+    assert not (Int(5) < 5)
+    assert not (5 < Int(5))
+    assert Int(6) > 5
+    assert 6 > Int(5)
+    assert Int(6) >= 5
+    assert 6 >= Int(5)
+    assert Int(-5) < -4
+    assert -4 > Int(-5)
+
+    assert Int(5) <= 5.0
+    assert 5.0 <= Int(5)
+    assert Int(5) >= 5.0
+    assert 5.0 >= Int(5)
+    assert not (Int(5) < 5.0)
+    assert not (5.0 < Int(5))
+    assert not (Int(5) > 5.0)
+    assert not (5.0 > Int(5))
+    assert Int(5) < 5.0 + 1e-8
+    assert not (5.0 + 1e-8 < Int(5))
+    assert 5.0 + 1e-8 > Int(5)
+    assert not (Int(5) > 5.0 + 1e-8)
+    assert Int(5) <= 5.0 + 1e-8
+    assert not (5.0 + 1e-8 <= Int(5))
+    assert 5.0 + 1e-8 >= Int(5)
+    assert not (Int(5) >= 5.0 + 1e-8)
+    assert Int(5) > 5.0 - 1e-8
+    assert not (5.0 - 1e-8 > Int(5))
+    assert 5.0 - 1e-8 < Int(5)
+    assert not (Int(5) < 5.0 - 1e-8)
+    assert Int(5) >= 5.0 - 1e-8
+    assert not (5.0 - 1e-8 >= Int(5))
+    assert 5.0 - 1e-8 <= Int(5)
+    assert not (Int(5) <= 5.0 - 1e-8)
+    f_close = 5.0 + 1e-14
+    assert Int(5) == f_close
+    assert f_close == Int(5)
+    assert Int(5) <= f_close
+    assert f_close <= Int(5)
+    assert Int(5) >= f_close
+    assert f_close >= Int(5)
+    assert not (Int(5) < f_close)
+    assert not (f_close < Int(5))
+    assert not (Int(5) > f_close)
+    assert not (f_close > Int(5))
+    assert Int(-5) < -4.9
+    assert Int(-5) > -5.1
+    assert -4.9 > Int(-5)
+    assert -5.1 < Int(-5)
+
+    assert Int(5) < Fraction(6)
+    assert not (Fraction(6) < Int(5))
+    assert Int(5) <= Fraction(5)
+    assert Fraction(5) <= Int(5)
+    assert Int(5) >= Fraction(5)
+    assert Fraction(5) >= Int(5)
+    assert not (Int(5) < Fraction(5))
+    assert not (Fraction(5) < Int(5))
+    assert not (Int(5) > Fraction(5))
+    assert not (Fraction(5) > Int(5))
+    assert Int(6) > Fraction(5)
+    assert not (Fraction(5) > Int(6))
+    assert Fraction(6) > Int(5)
+    assert not (Int(5) > Fraction(6))
+    assert Int(6) >= Fraction(5)
+    assert not (Fraction(5) >= Int(6))
+    assert Fraction(5) <= Int(5)
+    assert not (Int(5) <= Fraction(5))
+    assert Fraction(4) < Int(5)
+    assert not (Int(5) < Fraction(4))
+    assert Int(5) > Fraction(5, 2)
+    assert not (Fraction(5, 2) > Int(5))
+    assert Int(5) < Fraction(11, 2)
+    assert not (Fraction(11, 2) < Int(5))
+    assert Int(5) <= Fraction(10, 2)
+    assert Fraction(10, 2) <= Int(5)
+    assert Int(5) >= Fraction(10, 2)
+    assert Fraction(10, 2) >= Int(5)
+    assert Int(-5) < Fraction(-4)
+    assert Int(-5) > Fraction(-6)
+    assert Int(-5) <= Fraction(-5)
+    assert Int(-5) >= Fraction(-5)
+
+    with pytest.raises(TypeError):
+        Int(5) < "5"
+    with pytest.raises(TypeError):
+        Int(5) <= "5"
+    with pytest.raises(TypeError):
+        Int(5) > [5]
+    with pytest.raises(TypeError):
+        Int(5) >= None
+    with pytest.raises(TypeError):
+        Int(5) < object()
+    with pytest.raises(TypeError):
+        "5" < Int(5)
+    with pytest.raises(TypeError):
+        [5] <= Int(5)
+    with pytest.raises(TypeError):
+        None > Int(5)
+    with pytest.raises(TypeError):
+        object() >= Int(5)
+
+    class Dummy:
+        pass
+
+    assert (Int(5) == Dummy()) is False
