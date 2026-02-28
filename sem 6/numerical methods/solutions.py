@@ -36,20 +36,21 @@ class LinearSystemCramer(LinearSystemSolver):
 
 def basic_test(solver: LinearSystemSolver):
     for _ in range(100):
-        system = random_gen.generate_random_linear_system(size=4, low=-100, high=100)
+        system = random_gen.generate_random_linear_system(size=5, low=-100, high=100)
         solution = solver.solve(matrix.Matrix.from_mat(system.system), matrix.Matrix.from_mat(system.rhs))
         assert solution.solution == system.solution
         assert solution.solvable
     for _ in range(100):
-        system = random_gen.generate_random_linear_system(size=4, low=-100, high=100)
+        system = random_gen.generate_random_linear_system(size=5, low=-100, high=100)
         solution = solver.solve(system.system, system.rhs)
         assert solution.solution == system.solution
         assert solution.solvable
     for _ in range(100):
-        system = random_gen.generate_random_unsolvable_linear_system(size=4, low=-100, high=100)
+        system = random_gen.generate_random_unsolvable_linear_system(size=5, low=-100, high=100)
         solution = solver.solve(system.system, system.rhs)
         assert not solution.solvable
 
 
 def test_cramer():
     basic_test(LinearSystemCramer())
+    basic_test(LinearSystemCramer(determinant.DeterminantRecursive()))
