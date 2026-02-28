@@ -159,6 +159,12 @@ class Int(numbers.Integral):
         if isinstance(other, numbers.Integral):
             return Int(other) >> self
         return NotImplemented
+    
+    def __repr__(self):
+        return f'{self.value}'
+
+    def __str__(self):
+        return f'Int({self.value})'
 
 
 def test_int_constructors():
