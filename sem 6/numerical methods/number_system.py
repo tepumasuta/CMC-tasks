@@ -139,6 +139,16 @@ class Int(numbers.Integral):
         if isinstance(other, numbers.Integral):
             return self.value < Int(other).value
         return NotImplemented
+    
+    def __ge__(self, other) -> bool:
+        if isinstance(other, numbers.Integral):
+            return self.value >= Int(other).value
+        return NotImplemented
+
+    def __gt__(self, other) -> bool:
+        if isinstance(other, numbers.Integral):
+            return self.value > Int(other).value
+        return NotImplemented
 
     def __lshift__(self, other) -> Self:
         if isinstance(other, numbers.Integral):
@@ -307,7 +317,7 @@ def test_int_comparisons():
     assert Int(6) >= Fraction(5)
     assert not (Fraction(5) >= Int(6))
     assert Fraction(5) <= Int(5)
-    assert not (Int(5) <= Fraction(5))
+    assert Int(5) <= Fraction(5)
     assert Fraction(4) < Int(5)
     assert not (Int(5) < Fraction(4))
     assert Int(5) > Fraction(5, 2)
