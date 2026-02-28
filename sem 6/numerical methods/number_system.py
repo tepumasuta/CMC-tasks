@@ -1,5 +1,6 @@
 import pytest
 
+import math
 import numbers
 from fractions import Fraction
 from typing import Self
@@ -29,6 +30,38 @@ def to_integer(value: int | float | Fraction | numbers.Complex) -> int:
     if isinstance(value, numbers.Complex):
         return int(value)
     raise ValueError(f"Unknown value type: {type(value)}; passed: {value}")
+
+
+def integer_nth_root(n: int, q: int) -> tuple[int, bool]:
+    neg = n < 0
+    if neg:
+        assert q % 2 == 1
+        n = abs(n)
+    if n == 0:
+        return 0, True
+    hi = 1 << ((n.bit_length() + q - 1) // q)
+    lo = 1
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        p = pow(mid, q)
+        if p == n:
+            return mid * (-1 if neg else 1), True
+        if p < n:
+            lo = mid + 1
+        else:
+            hi = mid - 1
+    return hi, False
+
+
+def is_exact_2_neg_power(x: float) -> tuple[bool, int | None]:
+    if not math.isfinite(x) or x <= 0.0:
+        return False, None
+    m, e = math.frexp(x)
+    if m == 0.5:
+        k = 1 - e
+        if k >= 0:
+            return True, k
+    return False, None
 
 
 class Int(numbers.Integral):
@@ -68,10 +101,27 @@ class Int(numbers.Integral):
         return self.__mul__(other)
 
     def __truediv__(self, other):
-        assert False, "TODO: implement"
+        if is_integral(other):
+            other = to_integer(other)
+            if self % other == 0:
+                return self // other
+            assert False, "TODO: implement"
+        elif isinstance(other, Fraction):
+            if self * other.denominator % other.numerator == 0:
+                return self * other.denominator // other.numerator
+            assert False, "TODO: implement"
+        elif isinstance(other, float):
+            if (self.value / other).is_integer():
+                return Int(self.value / other)
+            assert False, "TODO: implement"
+        return NotImplemented
 
     def __rtruediv__(self, other):
-        assert False, "TODO: implement"
+        if is_integral(other):
+            other = to_integer(other)
+            if other % self == 0:
+                return other // self
+        return NotImplemented
 
     def __mod__(self, other) -> Self:
         if is_integral(other):
@@ -93,10 +143,43 @@ class Int(numbers.Integral):
             return Int(to_integer(other)) // self
         return NotImplemented
 
-    def __pow__(self, exponent, modulus=None):
-        assert False, "TODO: implement"
+    def __pow__(self, exponent, modulus=None):  # TODO: consider modulus
+        if self == 1:
+            return Int(self)
+        if self == 0 and exponent > 0:
+            return Int()
+        if self == 0 and is_integral(exponent) and to_integer(exponent) == 0:
+            raise ValueError("0 ** 0 is undefined")
+        if is_integral(exponent):
+            return Int(self.value ** to_integer(exponent))
+        if isinstance(exponent, Fraction):
+            if self < 0:
+                if not exponent.numerator == 1:
+                    raise ValueError(f"Ambigious power: {self} ** {exponent}")
+                if exponent.denominator % 2 == 0:
+                    raise ValueError(f"Complex result: {self} ** {exponent}")
+            if exponent.numerator == 1:
+                v, succ = integer_nth_root(self.value, exponent.denominator)
+                if succ:
+                    return Int(v)
+                assert False, "TODO: implement"
+            sign = 1
+            if self < 0:
+                sign = -1
+            v, succ = integer_nth_root(abs(self.value) ** exponent.numerator, exponent.denominator)
+            if succ:
+                return Int(v * sign**exponent.numerator)
+            assert False, "TODO: implement"
+        if isinstance(exponent, float):
+            succ, val = is_exact_2_neg_power(exponent)
+            if succ:
+                return self ** Fraction(1, 2**val)
+            assert False, "TODO: implement"
+        return NotImplemented
 
     def __rpow__(self, base):
+        if is_integral(base):
+            return Int(base).__pow__(self)
         assert False, "TODO: implement"
 
     def __invert__(self) -> Self:
@@ -631,9 +714,8 @@ def test_closed_int_operations():
     assert isinstance(result, Int)
     assert result == -2
 
-    result = Int(-32) ** Fraction(2, 5)
-    assert isinstance(result, Int)
-    assert result == 4
+    with pytest.raises(ValueError):
+        result = Int(-32) ** Fraction(2, 5)
 
     with pytest.raises(ValueError):
         Int(0) ** Int(0)
