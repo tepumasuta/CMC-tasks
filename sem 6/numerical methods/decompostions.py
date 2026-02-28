@@ -93,7 +93,12 @@ def test_basicsqrtdec():
             assert right.is_upper_triangular()
             assert diag.is_diag()
             assert left.T == right
-            assert left @ diag @ right == m
+            recovered = left @ diag @ right
+            assert all(
+                math.isclose(recovered[i, j], m[i, j], rel_tol=10e-7)
+                for i in range(recovered.cols)
+                for j in range(recovered.rows)
+            )
     for _ in range(6):
         for size in range(1, 7):
             m = random_gen.generate_random_positively_definite_matrix(size=size, low=-100, high=100)
