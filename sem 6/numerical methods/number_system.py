@@ -1,10 +1,10 @@
-from numbers import Integral, Complex
+import numbers
 from fractions import Fraction
 from typing import Self
 
 
-class Int(Integral):
-    def __init__(self, value: Complex = 0):
+class Int(numbers.Integral):
+    def __init__(self, value: numbers.Complex = 0):
         super().__init__()
         if isinstance(value, int):
             self.value = value
@@ -34,20 +34,20 @@ class Int(Integral):
     def __abs__(self) -> Self:
         return Int(abs(self.value))
 
-    def __add__(self, other: Complex) -> Complex:
-        if isinstance(other, Integral):
+    def __add__(self, other: numbers.Complex) -> numbers.Complex:
+        if isinstance(other, numbers.Integral):
             return Int(self.value + Int(other).value)
         return NotImplemented
 
-    def __radd__(self, other: Complex) -> Complex:
+    def __radd__(self, other: numbers.Complex) -> numbers.Complex:
         return self.__add__(other)
 
-    def __mul__(self, other: Complex) -> Complex:
-        if isinstance(other, Integral):
+    def __mul__(self, other: numbers.Complex) -> numbers.Complex:
+        if isinstance(other, numbers.Integral):
             return Int(self.value * Int(other).value)
         return NotImplemented
 
-    def __rmul__(self, other: Complex) -> Complex:
+    def __rmul__(self, other: numbers.Complex) -> numbers.Complex:
         return self.__mul__(other)
 
     def __truediv__(self, other):
@@ -57,22 +57,22 @@ class Int(Integral):
         assert False, "TODO: implement"
 
     def __mod__(self, other) -> Self:
-        if isinstance(other, Integral):
+        if isinstance(other, numbers.Integral):
             return Int(self.value % Int(other).value)
         return NotImplemented
 
     def __rmod__(self, other) -> Self:
-        if isinstance(other, Integral):
+        if isinstance(other, numbers.Integral):
             return Int(other) % self
         return NotImplemented
 
     def __floordiv__(self, other) -> Self:
-        if isinstance(other, Integral):
+        if isinstance(other, numbers.Integral):
             return Int(self.value // Int(other).value)
         return NotImplemented
 
     def __rfloordiv__(self, other) -> Self:
-        if isinstance(other, Integral):
+        if isinstance(other, numbers.Integral):
             return Int(other) // self
         return NotImplemented
 
@@ -86,7 +86,7 @@ class Int(Integral):
         return Int(~self.value)
 
     def __and__(self, other) -> Self:
-        if isinstance(other, Integral):
+        if isinstance(other, numbers.Integral):
             return Int(self.value & Int(other).value)
         return NotImplemented
 
@@ -94,7 +94,7 @@ class Int(Integral):
         return self.__and__(other)
 
     def __or__(self, other) -> Self:
-        if isinstance(other, Integral):
+        if isinstance(other, numbers.Integral):
             return Int(self.value | Int(other).value)
         return NotImplemented
 
@@ -102,7 +102,7 @@ class Int(Integral):
         return self.__or__(other)
 
     def __xor__(self, other) -> Self:
-        if isinstance(other, Integral):
+        if isinstance(other, numbers.Integral):
             return Int(self.value ^ Int(other).value)
         return NotImplemented
 
@@ -118,43 +118,43 @@ class Int(Integral):
     def __floor__(self) -> Self:
         return Int(self)
 
-    def __round__(self, ndigits: None = None) -> Complex:
+    def __round__(self, ndigits: None = None) -> numbers.Complex:
         assert False, "TODO: implement"
 
     def __eq__(self, other) -> bool:
-        if not isinstance(other, Complex):
+        if not isinstance(other, numbers.Complex):
             return False
-        if isinstance(other, Integral):
+        if isinstance(other, numbers.Integral):
             return self.value == Int(other).value
         return NotImplemented
 
     def __le__(self, other) -> bool:
-        if isinstance(other, Integral):
+        if isinstance(other, numbers.Integral):
             return self.value <= Int(other).value
         return NotImplemented
 
     def __lt__(self, other) -> bool:
-        if isinstance(other, Integral):
+        if isinstance(other, numbers.Integral):
             return self.value < Int(other).value
         return NotImplemented
 
     def __lshift__(self, other) -> Self:
-        if isinstance(other, Integral):
+        if isinstance(other, numbers.Integral):
             return Int(self.value << Int(other).value)
         return NotImplemented
 
     def __rlshift__(self, other) -> Self:
-        if isinstance(other, Integral):
+        if isinstance(other, numbers.Integral):
             return Int(other) << self
         return NotImplemented
 
     def __rshift__(self, other):
-        if isinstance(other, Integral):
+        if isinstance(other, numbers.Integral):
             return Int(self.value >> Int(other).value)
         return NotImplemented
 
     def __rrshift__(self, other):
-        if isinstance(other, Integral):
+        if isinstance(other, numbers.Integral):
             return Int(other) >> self
         return NotImplemented
 
