@@ -371,3 +371,512 @@ def test_int_comparisons():
         pass
 
     assert (Int(5) == Dummy()) is False
+
+
+def test_closed_int_operations():
+    result = Int(5) + Int(3)
+    assert isinstance(result, Int)
+    assert result == 8
+
+    result = 5 + Int(3)
+    assert isinstance(result, Int)
+    assert result == 8
+
+    result = Int(5) + 3
+    assert isinstance(result, Int)
+    assert result == 8
+
+    result = Int(5) + 3.0
+    assert isinstance(result, Int)
+    assert result == 8
+
+    result = 5.0 + Int(3)
+    assert isinstance(result, Int)
+    assert result == 8
+
+    result = Int(5) + Fraction(3)
+    assert isinstance(result, Int)
+    assert result == 8
+
+    result = Fraction(5) + Int(3)
+    assert isinstance(result, Int)
+    assert result == 8
+
+    result = Int(5) - Int(3)
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = 5 - Int(3)
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = Int(5) - 3
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = 5.0 - Int(3)
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = Int(5) - 3.0
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = Fraction(5) - Int(3)
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = Int(5) - Fraction(3)
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = Int(5) * Int(3)
+    assert isinstance(result, Int)
+    assert result == 15
+
+    result = 5 * Int(3)
+    assert isinstance(result, Int)
+    assert result == 15
+
+    result = Int(5) * 3
+    assert isinstance(result, Int)
+    assert result == 15
+
+    result = 5.0 * Int(3)
+    assert isinstance(result, Int)
+    assert result == 15
+
+    result = Int(5) * 3.0
+    assert isinstance(result, Int)
+    assert result == 15
+
+    result = Fraction(5) * Int(3)
+    assert isinstance(result, Int)
+    assert result == 15
+
+    result = Int(5) * Fraction(3)
+    assert isinstance(result, Int)
+    assert result == 15
+
+    result = Int(5) // Int(2)
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = 5 // Int(2)
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = Int(5) // 2
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = 5.0 // Int(2)
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = Int(5) // 2.0
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = Fraction(5) // Int(2)
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = Int(5) // Fraction(2)
+    assert isinstance(result, Int)
+    assert result == 2
+
+    with pytest.raises(ZeroDivisionError):
+        Int(5) // Int(0)
+    with pytest.raises(ZeroDivisionError):
+        Int(5) // 0
+    with pytest.raises(ZeroDivisionError):
+        Int(5) // 0.0
+    with pytest.raises(ZeroDivisionError):
+        Int(5) // Fraction(0)
+
+    result = Int(5) % Int(2)
+    assert isinstance(result, Int)
+    assert result == 1
+
+    result = 5 % Int(2)
+    assert isinstance(result, Int)
+    assert result == 1
+
+    result = Int(5) % 2
+    assert isinstance(result, Int)
+    assert result == 1
+
+    result = Int(5) % 2.0
+    assert isinstance(result, Int)
+    assert result == 1
+
+    result = 5.0 % Int(2)
+    assert isinstance(result, Int)
+    assert result == 1
+
+    result = Fraction(5) % Int(2)
+    assert isinstance(result, Int)
+    assert result == 1
+
+    result = Int(5) % Fraction(2)
+    assert isinstance(result, Int)
+    assert result == 1
+
+    with pytest.raises(ZeroDivisionError):
+        Int(5) % Int(0)
+    with pytest.raises(ZeroDivisionError):
+        Int(5) % 0
+    with pytest.raises(ZeroDivisionError):
+        Int(5) % 0.0
+    with pytest.raises(ZeroDivisionError):
+        Int(5) % Fraction(0)
+
+    result = Int(-1) % Int(5)
+    assert isinstance(result, Int)
+    assert result == 4
+
+    result = -1 % Int(5)
+    assert isinstance(result, Int)
+    assert result == 4
+
+    result = -1.0 % Int(5)
+    assert isinstance(result, Int)
+    assert result == 4
+
+    result = Fraction(-1) % Int(5)
+    assert isinstance(result, Int)
+    assert result == 4
+
+    result = Int(4) / Int(2)
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = 4 / Int(2)
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = Int(4) / 2
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = Int(5) / Fraction(5, 2)
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = Fraction(5) / Int(1)
+    assert isinstance(result, Int)
+    assert result == 5
+
+    result = Int(15) / 3.0
+    assert isinstance(result, Int)
+    assert result == 5
+
+    result = Int(15) / 1.5
+    assert isinstance(result, Int)
+    assert result == 10
+
+    result = 15.0 / Int(3)
+    assert isinstance(result, Int)
+    assert result == 5
+
+    with pytest.raises(ZeroDivisionError):
+        Int(5) / Int(0)
+
+    result = Int(2) ** Int(3)
+    assert isinstance(result, Int)
+    assert result == 8
+
+    result = 2 ** Int(3)
+    assert isinstance(result, Int)
+    assert result == 8
+
+    result = Int(2) ** 3
+    assert isinstance(result, Int)
+    assert result == 8
+
+    result = Int(2) ** 3.0
+    assert isinstance(result, Int)
+    assert result == 8
+
+    result = Int(2) ** Fraction(3)
+    assert isinstance(result, Int)
+    assert result == 8
+
+    result = Int(1) ** -1
+    assert isinstance(result, Int)
+    assert result == 1
+
+    result = Int(1) ** Fraction(6, 25)
+    assert isinstance(result, Int)
+    assert result == 1
+
+    result = Int(1) ** 0.45234543
+    assert isinstance(result, Int)
+    assert result == 1
+
+    result = Int(9) ** Fraction(1, 2)
+    assert isinstance(result, Int)
+    assert result == 3
+
+    result = Int(27) ** Fraction(2, 3)
+    assert isinstance(result, Int)
+    assert result == 9
+
+    result = Int(4) ** 0.5
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = Int(-8) ** Fraction(1, 3)
+    assert isinstance(result, Int)
+    assert result == -2
+
+    result = Int(-32) ** Fraction(2, 5)
+    assert isinstance(result, Int)
+    assert result == 4
+
+    with pytest.raises(ValueError):
+        Int(0) ** Int(0)
+    with pytest.raises(ValueError):
+        Int(0) ** 0
+    with pytest.raises(ValueError):
+        0 ** Int(0)
+
+    result = Int(0) ** Int(5)
+    assert isinstance(result, Int)
+    assert result == 0
+
+    result = Int(0) ** 5
+    assert isinstance(result, Int)
+    assert result == 0
+
+    result = 0 ** Int(5)
+    assert isinstance(result, Int)
+    assert result == 0
+
+    result = Int(5) ** Int(0)
+    assert isinstance(result, Int)
+    assert result == 1
+
+    result = Int(5) ** 0
+    assert isinstance(result, Int)
+    assert result == 1
+
+    result = 5 ** Int(0)
+    assert isinstance(result, Int)
+    assert result == 1
+
+    result = Int(-5) ** Int(0)
+    assert isinstance(result, Int)
+    assert result == 1
+
+    result = Int(-5) ** 0
+    assert isinstance(result, Int)
+    assert result == 1
+
+    result = (-5) ** Int(0)
+    assert isinstance(result, Int)
+    assert result == 1
+
+    assert Int(10) ** 100 == 10**100
+
+    with pytest.raises(ZeroDivisionError):
+        Int(0) ** -1
+
+    result = -Int(5)
+    assert isinstance(result, Int)
+    assert result == -5
+
+    result = -Int(-5)
+    assert isinstance(result, Int)
+    assert result == 5
+
+    result = +Int(5)
+    assert isinstance(result, Int)
+    assert result == 5
+
+    result = abs(Int(-5))
+    assert isinstance(result, Int)
+    assert result == 5
+
+    result = abs(Int(5))
+    assert isinstance(result, Int)
+    assert result == 5
+
+    result = Int(5) & Int(3)
+    assert isinstance(result, Int)
+    assert result == 1
+
+    result = 5 & Int(3)
+    assert isinstance(result, Int)
+    assert result == 1
+
+    result = Int(5) & 3
+    assert isinstance(result, Int)
+    assert result == 1
+
+    result = 5.0 & Int(3)
+    assert isinstance(result, Int)
+    assert result == 1
+
+    result = Int(5) & 3.0
+    assert isinstance(result, Int)
+    assert result == 1
+
+    result = Fraction(5) & Int(3)
+    assert isinstance(result, Int)
+    assert result == 1
+
+    result = Int(5) & Fraction(3)
+    assert isinstance(result, Int)
+    assert result == 1
+
+    result = Int(5) | Int(3)
+    assert isinstance(result, Int)
+    assert result == 7
+
+    result = Int(5) | 3
+    assert isinstance(result, Int)
+    assert result == 7
+
+    result = 5 | Int(3)
+    assert isinstance(result, Int)
+    assert result == 7
+
+    result = 5.0 | Int(3)
+    assert isinstance(result, Int)
+    assert result == 7
+
+    result = Int(5) | 3.0
+    assert isinstance(result, Int)
+    assert result == 7
+
+    result = Fraction(5) | Int(3)
+    assert isinstance(result, Int)
+    assert result == 7
+
+    result = Int(5) | Fraction(3)
+    assert isinstance(result, Int)
+    assert result == 7
+
+    result = Int(5) ^ Int(3)
+    assert isinstance(result, Int)
+    assert result == 6
+
+    result = 5 ^ Int(3)
+    assert isinstance(result, Int)
+    assert result == 6
+
+    result = Int(5) ^ 3
+    assert isinstance(result, Int)
+    assert result == 6
+
+    result = 5.0 ^ Int(3)
+    assert isinstance(result, Int)
+    assert result == 6
+
+    result = Int(5) ^ 3.0
+    assert isinstance(result, Int)
+    assert result == 6
+
+    result = Fraction(5) ^ Int(3)
+    assert isinstance(result, Int)
+    assert result == 6
+
+    result = Int(5) ^ Fraction(3)
+    assert isinstance(result, Int)
+    assert result == 6
+
+    result = Int(5) << Int(1)
+    assert isinstance(result, Int)
+    assert result == 10
+
+    result = 5 << Int(1)
+    assert isinstance(result, Int)
+    assert result == 10
+
+    result = Int(5) << 1
+    assert isinstance(result, Int)
+    assert result == 10
+
+    result = 5.0 << Int(1)
+    assert isinstance(result, Int)
+    assert result == 10
+
+    result = Int(5) << 1.0
+    assert isinstance(result, Int)
+    assert result == 10
+
+    result = Fraction(5) << Int(1)
+    assert isinstance(result, Int)
+    assert result == 10
+
+    result = Int(5) << Fraction(1)
+    assert isinstance(result, Int)
+    assert result == 10
+
+    result = Int(5) >> Int(1)
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = 5 >> Int(1)
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = Int(5) >> 1
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = 5.0 >> Int(1)
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = Int(5) >> 1.0
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = Fraction(5) >> Int(1)
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = Int(5) >> Fraction(1)
+    assert isinstance(result, Int)
+    assert result == 2
+
+    result = ~Int(5)
+    assert isinstance(result, Int)
+    assert result == -6
+
+    with pytest.raises(ValueError):
+        Int(5) << Int(-1)
+    with pytest.raises(ValueError):
+        Int(5) >> Int(-1)
+
+    result = Int(-5) + Int(-3)
+    assert isinstance(result, Int)
+    assert result == -8
+
+    result = Int(-5) - Int(-3)
+    assert isinstance(result, Int)
+    assert result == -2
+
+    result = Int(-5) * Int(-3)
+    assert isinstance(result, Int)
+    assert result == 15
+
+    result = Int(-5) // Int(2)
+    assert isinstance(result, Int)
+    assert result == -3
+
+    result = Int(-5) % Int(2)
+    assert isinstance(result, Int)
+    assert result == 1
+
+    huge = 10**100
+    result = Int(huge) + Int(huge)
+    assert isinstance(result, Int)
+    assert result == 2 * huge
+
+    result = Int(huge) * Int(2)
+    assert isinstance(result, Int)
+    assert result == 2 * huge
