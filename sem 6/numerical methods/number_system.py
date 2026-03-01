@@ -64,6 +64,9 @@ def is_exact_2_neg_power(x: float) -> tuple[bool, int | None]:
     return False, None
 
 
+class Rat(numbers.Rational): ...
+
+
 class Int(numbers.Integral):
     def __init__(self, value: numbers.Complex = 0):
         super().__init__()
@@ -219,7 +222,9 @@ class Int(numbers.Integral):
         return Int(self)
 
     def __round__(self, ndigits: None = None) -> numbers.Complex:
-        assert False, "TODO: implement"
+        if ndigits is not None:
+            assert False, "TODO: implement"
+        return self
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, numbers.Complex):
@@ -961,3 +966,19 @@ def test_closed_int_operations():
     result = Int(huge) * Int(2)
     assert isinstance(result, Int)
     assert result == 2 * huge
+
+    result = math.floor(Int(69))
+    assert isinstance(result, Int)
+    assert result == 69
+
+    result = math.ceil(Int(69))
+    assert isinstance(result, Int)
+    assert result == 69
+
+    result = round(Int(69))
+    assert isinstance(result, Int)
+    assert result == 69
+
+    result = math.trunc(Int(69))
+    assert isinstance(result, Int)
+    assert result == 69
