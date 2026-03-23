@@ -1,0 +1,39 @@
+<Window
+xmlns="https://github.com/avaloniaui"
+xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+x:Class="ViewLib.MainWindow"
+Title="Lab1"
+Loaded="OnLoaded"
+Closing="OnClosing"
+Background="#555555"
+>
+  <Grid Margin="10">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*"/>
+      <ColumnDefinition Width="2*"/>
+      <ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+
+    <StackPanel Grid.Column="0" Margin="5" Spacing="10">
+      <ListBox x:Name="FiringListBox" Height="200"/>
+      <DatePicker x:Name="WhenDatePicker"/>
+    </StackPanel>
+
+    <StackPanel Grid.Column="1" Margin="5" Spacing="10">
+      <TextBlock x:Name="FileNameTextBlock" Text="[no file loaded]"/>
+      <TextBlock x:Name="ToStringTextBlock" TextWrapping="Wrap"/>
+      <Button x:Name="OutputDataButton" Content="Output Data" Click="OutputDataButton_Click"/>
+      <Button x:Name="LoadButton" Content="Load" Click="LoadButton_Click"/>
+      <Button x:Name="SaveButton" Content="Save" Click="SaveButton_Click"/>
+    </StackPanel>
+
+    <StackPanel Grid.Column="2" Orientation="Vertical" Margin="5">
+      <TextBox x:Name="textBox_substring" Watermark="Введите подстроку" Margin="0,0,0,5"/>
+      <ListBox x:Name="listBox_subset" MinHeight="150" Margin="0,0,0,5"/>
+      <Button x:Name="SubsetButton" Content="Subset" Click="SubsetButton_Click"/>
+    </StackPanel>
+  </Grid>
+</Window>

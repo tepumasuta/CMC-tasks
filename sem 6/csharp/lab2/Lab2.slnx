@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Lab2App/Lab2App.csproj" />
+  <Project Path="ModelLib/ModelLib.csproj" />
+  <Project Path="ViewLib/ViewLib.csproj" />
+</Solution>
